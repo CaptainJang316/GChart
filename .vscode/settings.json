@@ -2,7 +2,7 @@
     "editor.formatOnSave": true, // 파일 저장 시 자동 포맷
     "editor.defaultFormatter": "esbenp.prettier-vscode", // Prettier를 기본 포맷터로 설정
     "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": true // 저장 시 ESLint가 자동으로 문제를 고치도록 설정
+        "source.fixAll.eslint": "explicit"
     },
     "typescript.tsdk": "node_modules/typescript/lib"
 }
