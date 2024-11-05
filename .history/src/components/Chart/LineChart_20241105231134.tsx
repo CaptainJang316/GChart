@@ -108,7 +108,7 @@ const LineChart: React.FC<ChartProps> = ({
                         return (
                             <text
                             x={currX + barWidth / 2 + 25}
-                            y={height + 20}
+                            y={height + 17}
                             textAnchor="middle"
                             // fontSize="12"
                             fontWeight="bold"

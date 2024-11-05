@@ -15,7 +15,7 @@ export const useAxis = ({
     data, 
     width, 
     height, 
-    axisCnt = 6,
+    axisCnt = 8,
     horizontalPadding = 40,
     topPadding = 40
 }: AxisProps) => {
@@ -51,7 +51,7 @@ export const useAxis = ({
         return {
             ticks: ticks.map(tick => ({
                 value: tick,
-                position: scales.yScale(tick) + 5
+                position: scales.yScale(tick)
             }))
         };
     }, [scales.yScale, axisCnt]);

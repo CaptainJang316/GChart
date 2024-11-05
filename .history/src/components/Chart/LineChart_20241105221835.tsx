@@ -29,8 +29,8 @@ const LineChart: React.FC<ChartProps> = ({
 
     return (
         // svg 요소 안에, 차트를 그린다.
-        <div style={{ display: 'inline-block', width: `${width}px`, height: `${height}px`}}>
-            <svg width='100%' height='100%' viewBox={`0 0 ${width} ${height + 30}`} style={{ border: '1px solid #ccc', padding: '1rem 1.5rem 1.5rem 1rem'}}>
+        <div style={{ width: `${width}px`, height: `${height}px`, backgroundColor: 'lightblue' }}>
+            <svg viewBox={`0 0 ${width} ${height + 20}`} style={{ border: '1px solid #ccc', padding: '1rem 1.5rem 1.5rem 1rem'}}>
                 <g className='grid-layer'>
                     {gridLines.horizontal.map((el: { id: React.Key | null | undefined; x1: string | number | undefined; y1: string | number | undefined; x2: string | number | undefined; y2: string | number | undefined; }, index: number) => (
                         <line
@@ -49,10 +49,10 @@ const LineChart: React.FC<ChartProps> = ({
                 <g className='axis-layer'>
                     {yAxis.ticks.map((tick) => (
                         <text
-                            x={5}
+                            x={10}
                             y={tick.position}
                             textAnchor="middle"
-                            // fontSize="10"
+                            fontSize="10"
                             fill="#333"
                         >
                         {tick.value}
@@ -81,7 +81,7 @@ const LineChart: React.FC<ChartProps> = ({
                                     x={barWidth / 2 + 25}
                                     y={-5}
                                     textAnchor="middle"
-                                    // fontSize="10"
+                                    fontSize="10"
                                     fill="#333"
                                 >
                                     {d.value}
@@ -108,9 +108,9 @@ const LineChart: React.FC<ChartProps> = ({
                         return (
                             <text
                             x={currX + barWidth / 2 + 25}
-                            y={height + 20}
+                            y={height + 17}
                             textAnchor="middle"
-                            // fontSize="12"
+                            fontSize="12"
                             fontWeight="bold"
                             fill="#333"
                         >

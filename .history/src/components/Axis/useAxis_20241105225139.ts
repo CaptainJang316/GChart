@@ -51,7 +51,7 @@ export const useAxis = ({
         return {
             ticks: ticks.map(tick => ({
                 value: tick,
-                position: scales.yScale(tick) + 5
+                position: scales.yScale(tick) - 10
             }))
         };
     }, [scales.yScale, axisCnt]);

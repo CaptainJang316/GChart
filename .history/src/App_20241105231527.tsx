@@ -12,6 +12,9 @@ function App() {
     { label: 'QWER', value: 50 },
     { label: 'dfgh', value: 15 },
     { label: 'gggg', value: 80 },
+        { label: 'QWER', value: 50 },
+    { label: 'dfgh', value: 15 },
+    { label: 'gggg', value: 80 },
   ];
 
   return (

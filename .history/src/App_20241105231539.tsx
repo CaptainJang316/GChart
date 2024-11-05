@@ -9,10 +9,7 @@ function App() {
     { label: 'zxcv', value: 20 },
     { label: 'qwer', value: 30 },
     { label: 'ASDF', value: 40 },
-    { label: 'QWER', value: 50 },
-    { label: 'dfgh', value: 15 },
-    { label: 'gggg', value: 80 },
-  ];
+  ]
 
   return (
     <div>
