@@ -2,7 +2,6 @@
 import React from 'react';
 import { useAxis } from '../Axis/useAxis';
 import { useGrid } from '../Grid/useGrid';
-import { Option } from '../../Model/Option';
 
 interface ChartProps {
     data: { label: string, value: number }[];
