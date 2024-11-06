@@ -18,6 +18,7 @@ const LineChart: React.FC<Option> = ({
     height = 300,
     axisCnt = 8,
     color = '#4A90E2',
+    type = 'line'
 }) => {
     const values = data.map(item => item.value);
     const {xAxis, yAxis, scales} = useAxis({data: values, width: width, height: height, axisCnt: axisCnt});
