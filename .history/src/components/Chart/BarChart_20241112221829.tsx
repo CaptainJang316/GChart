@@ -223,23 +223,26 @@ const BarChart: React.FC<Option> = ({
                             y={-25}
                             width={rectWidth}
                         />
-                        <circle 
-                            cx={-15}
-                            cy={-10}
-                            r="3" 
-                            fill={color} 
-                            stroke={color} 
-                            stroke-width="7" 
-                        />
-                        <TooltipTitle
-                            ref={titleRef}
-                            y={-5}
-                        >
-                            {hoveredInfo.label}
-                        </TooltipTitle>
+                        <g>
+                            <circle 
+                                cx={-15}
+                                cy={-10}
+                                r="3" 
+                                fill={color} 
+                                stroke={color} 
+                                stroke-width="7" 
+                            />
+                            <TooltipTitle
+                                ref={titleRef}
+                                x={15}
+                                y={-5}
+                            >
+                                {hoveredInfo.label}
+                            </TooltipTitle>
+                        </g>
                         <TooltipText
                             ref={textRef}
-                            x={-20}
+                            x={13}
                             y={15}
                         >
                             {title?.subTitle}: {hoveredInfo.value}

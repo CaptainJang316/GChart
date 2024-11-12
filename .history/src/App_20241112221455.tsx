@@ -14,7 +14,7 @@ function App() {
     data: [
       { label: 'adsf', value: 40 },
       { label: 'qewr', value: 20 },
-      { label: 'C', value: 150 },
+      { label: 'zxcv', value: 150 },
       { label: 'sdfg', value: 40 },
       { label: 'xvcb', value: 30 },
       { label: 'dfgh', value: 15 },

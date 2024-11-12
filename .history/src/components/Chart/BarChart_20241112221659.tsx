@@ -40,7 +40,7 @@ const TooltipTitle = styled.text`
   fill: white;
   font-size: 14px;
   font-weight: bold;
-  text-anchor: start;
+  text-anchor: middle;
   transition: all 0.15s ease-out;
 `;
 
@@ -223,6 +223,7 @@ const BarChart: React.FC<Option> = ({
                             y={-25}
                             width={rectWidth}
                         />
+                        <g>
                         <circle 
                             cx={-15}
                             cy={-10}
@@ -233,13 +234,15 @@ const BarChart: React.FC<Option> = ({
                         />
                         <TooltipTitle
                             ref={titleRef}
+                            x={10}
                             y={-5}
                         >
+                        </g>
                             {hoveredInfo.label}
                         </TooltipTitle>
                         <TooltipText
                             ref={textRef}
-                            x={-20}
+                            x={13}
                             y={15}
                         >
                             {title?.subTitle}: {hoveredInfo.value}

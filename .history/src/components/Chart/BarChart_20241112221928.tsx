@@ -233,6 +233,7 @@ const BarChart: React.FC<Option> = ({
                         />
                         <TooltipTitle
                             ref={titleRef}
+                            x={15}
                             y={-5}
                         >
                             {hoveredInfo.label}
