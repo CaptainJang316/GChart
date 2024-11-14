@@ -35,11 +35,11 @@ function App() {
         max: 160,
         // fontSize: 16,
         // color: 'black',
-        // formatter: '%'
+        formatter: ''
       },
     },
     chartStyle: {
-      color: "brown"
+      color: "#5470C6"
     },
     tooltip: true,
     label:  {

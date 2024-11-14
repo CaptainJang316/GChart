@@ -5,7 +5,6 @@ import { useGrid } from '../Grid/useGrid';
 import { Option } from '../../types/Option';
 import { darkenColor, lightenColor } from '../../utils/color';
 import '../../App.css';
-import { a, animated, config, useSpring } from '@react-spring/web';
 import styled, { keyframes } from 'styled-components';
 import { index } from 'd3';
 
