@@ -12,34 +12,34 @@ export type Option = {
     label?: Label;
 }
 
-type Data = {
+export type Data = {
     label: string;
     value: number;
 }
 
-type TitleAlign = 'start' | 'middle' | 'end';
+export type TitleAlign = 'start' | 'middle' | 'end';
 
-type Title = {
+export type Title = {
     text: string;
     subTitle?: string;
     titleAlign?: TitleAlign;
 }
 
-type Layout = {
+export type Layout = {
     width: number;
     height: number;
     padding?: number;
     axisCnt?: number;
 }
 
-type XAxis = {
+export type XAxis = {
     showSplitLine?: boolean;
     axisLabel?: {
         rotate: number;
     },
 }
 
-type YAxis = {
+export type YAxis = {
     min?: number;
     max?: number;
     fontSize?: number;
@@ -47,14 +47,14 @@ type YAxis = {
     formatter?: string;
 }
 
-type ChartStyle = {
+export type ChartStyle = {
     color: string;
     hoverColor?: string;
     animation?: string;
     unit?: string;
 }
 
-type Label = {
+export type Label = {
     show: boolean,
     fontSize?: number,
     position?: string

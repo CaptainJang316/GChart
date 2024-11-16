@@ -70,8 +70,15 @@ const growHeight = (finalHeight: number) => keyframes`
 const StyledRect = styled.rect<{ finalHeight: number }>`
   animation: ${(props) => growHeight(props.finalHeight)} 0.8s ease-in-out; 
 `
+interface BarChartProps extends Option {
+    onLayoutChange?: (layout: Option['layout']) => void;
+    onChartStyleChange?: (style: Option['chartStyle']) => void;
+    onTitleChange?: (title: Option['title']) => void;
+    onAxisChange?: (axis: Option['axis']) => void;
+    onLabelChange?: (label: Option['label']) => void;
+  }
 
-const BarChart: React.FC<Option> = ({
+const BarChart: React.FC<BarChartProps> = ({
     data,
     title,
     layout: {
