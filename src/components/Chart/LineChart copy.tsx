@@ -57,28 +57,28 @@ const TooltipText = styled(TooltipTitle)`
   font-weight: normal;
 `;
 
-const drawLine = keyframes<{totalLength: number}>`
+const drawLine = keyframes`
+    from {
+        stroke-dashoffset: 1000;
+    }
     to {
         stroke-dashoffset: 0;
     }
 `
 
-
-const StyledPath = styled.path<{isVisible?: boolean, totalLength?: number, color?: string}>`
-    fill: none;    
-    stroke: ${props => props.color};    
+const StyledLine = styled.line<{isVisible?: boolean, width?: number}>`
     transition: stroke 0.3s ease-in-out;
-    stroke-width: 2;
-    stroke-dasharray: ${props => props.totalLength}; // <-- 이것과 
-    stroke-dashoffset: ${props => props.totalLength}; // <-- 이것을 둘다 여기서 초기화 지정해줘야 애니메이션 작동함(keyframe에서 from에 설정하면 작동안함)
+    stroke-dasharray: 1000;
+    stroke-dashoffset: ${props => (props.isVisible? '0' : '1000')};
     animation: ${props => 
-        props.isVisible && props.totalLength && 
+        props.isVisible && 
         css`
-            ${drawLine} 1.5s ease-in-out forwards
+            ${drawLine} 1s ease-in-out forwards
         `};
+    }
 
     &:hover {
-        stroke-width: 3;
+        stroke-width: ${props => props.width? props.width + 1 : 3};
     } 
 `
 
@@ -111,22 +111,12 @@ const LineChart: React.FC<BarChartProps> = ({
         color: '#6E7079'
     };
 
-    const {yAxis, scales, tickCount} = useAxis({
-        data: values, 
-        width: width, 
-        height: height, 
-        minValue: axis?.yAxis?.min, 
-        maxValue: axis?.yAxis?.max
-    });
-    const {gridLines} = useGrid({
-        data: values, 
-        scales, width, 
-        height, 
-        horizontalLineCnt: tickCount
-    });
+    const {yAxis, scales, tickCount} = useAxis({data: values, width: width, height: height, minValue: axis?.yAxis?.min, maxValue: axis?.yAxis?.max});
+    const {gridLines} = useGrid({data: values, scales, width, height, horizontalLineCnt: tickCount});
     // const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
 
     const barWidth = (width - 30) / data.length;
+
 
     const [isVisible, setIsVisible] = useState(false);
 
@@ -143,11 +133,9 @@ const LineChart: React.FC<BarChartProps> = ({
     });
 
     const [rectWidth, setRectWidth] = useState(0);
-    const [pathLength, setPathLength] = useState(0);
     
     const titleRef = useRef<SVGTextElement | null>(null);
     const textRef = useRef<SVGTextElement | null>(null);
-    const pathRef = useRef<SVGPathElement | null>(null);
     
     useEffect(() => {
         setIsVisible(true);
@@ -164,14 +152,7 @@ const LineChart: React.FC<BarChartProps> = ({
         }
     }, [hoveredInfo, title]);
 
-    useEffect(() => {
-        if (pathRef.current) {
-            const length = pathRef.current.getTotalLength();
-            setPathLength(length);
-        }
-    }, [data])
-
-    const handleMouseMove = (e: React.MouseEvent<SVGElement, MouseEvent>, value: number, label: string, index: number) => {
+    const handleMouseMove = (e: React.MouseEvent<SVGRectElement, MouseEvent>, value: number, label: string, index: number) => {
         const svgElement = e.currentTarget.closest('svg') as SVGSVGElement | null;
         if (svgElement) {
             const point = svgElement.createSVGPoint();
@@ -187,13 +168,6 @@ const LineChart: React.FC<BarChartProps> = ({
                 label
             });
         }
-    };
-
-    const createPathData = () => {
-        return data.map((d, i) => {
-            if (i === 0) return `M ${barWidth - (barWidth / 6) - 5 + (i * barWidth)} ${scales.yScale(d.value)}`;
-            return `L ${barWidth - (barWidth / 6) - 5 + (i * barWidth)} ${scales.yScale(d.value)}`;
-        }).join(' ');
     };
 
     return (
@@ -277,29 +251,39 @@ const LineChart: React.FC<BarChartProps> = ({
                 </g>
                 
                 <g className='chart-layer'>
-                    <StyledPath
-                        ref={pathRef}
-                        d={createPathData()}
-                        isVisible={isVisible}
-                        totalLength={pathLength}
-                        color={hoveredInfo.index !== null ? hoverColor : color}
-                        onMouseOver={() => setHoveredInfo(prev => ({...prev, index: 0}))}
-                        onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
-                    />
+                    {data.map((_, i) => {
+                        const isHovered = hoveredInfo?.index == i;
+                        if(isHovered) console.log("hoveredInfo?.index: " + hoveredInfo?.index);
 
-                    {data.map((d, i) => (
-                        <circle
-                            key={i}
-                            cx={barWidth - (barWidth / 6) - 5 + (i * barWidth)}
-                            cy={scales.yScale(d.value)}
-                            r="4"
-                            fill={color}
-                            stroke="white"
-                            strokeWidth="2"
-                            onMouseOver={(e) => handleMouseMove(e, d.value, d.label, i)}
-                            onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
-                        />
-                    ))}
+                        if(i < data.length - 1) {
+                            const barHeight1 = height - scales.yScale(data[i].value);
+                            const barHeight2 = height - scales.yScale(data[i+1].value);
+                            return (
+                                // g는 svg 요소 내에 사용되는 것.
+                                // svg에서 그룹을 만드는 역할을 한다.
+                                // trangform은 그룹의 위치를 변환하는 데 사용됨.
+                                // translate(${i * barWidth}, ${height - barHeight}) <- x축, y축 이동 정도 지정
+                                
+                                <g key={i} transform={`translate(${i * barWidth}, ${height})`}>
+                                    <StyledLine
+                                        x1={barWidth - (barWidth / 6) - 5}
+                                        y1={-1 * barHeight1}
+                                        x2={barWidth * 2 - 20}
+                                        y2={-1 * barHeight2}
+                                        strokeWidth={2}
+                                        stroke={isHovered? hoverColor : color}
+                                        
+                                        isVisible={isVisible}
+                                        // finalHeight={barHeight}
+                                        onMouseOver={() => setHoveredInfo(prev => ({...prev, index: i}))}
+                                        // onMouseMove={(e) => handleMouseMove(e, d.value, d.label, i)}
+                                        onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
+                                        className='line-rect'
+                                    />
+                                </g>
+                            );
+                        }
+                    })}
                 </g>
 
                 <g className='tooltip-layer'>
