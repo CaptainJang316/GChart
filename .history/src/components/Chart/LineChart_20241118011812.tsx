@@ -7,6 +7,7 @@ import { darkenColor, lightenColor } from '../../utils/color';
 import '../../App.css';
 import styled, { keyframes } from 'styled-components';
 import { index } from 'd3';
+import { isVisible } from '@testing-library/user-event/dist/utils';
 
 
 const StyledTitle = styled.text`
@@ -57,19 +58,14 @@ const TooltipText = styled(TooltipTitle)`
   font-weight: normal;
 `;
 
-const growHeight = (finalHeight: number) => keyframes`
-  from {
-    height: 0;
-    y: ${finalHeight}; // y 값은 아래에서 시작
-  }
-  to {
-    height: ${finalHeight};
-  }
-`;
+const StyledLine = styled.line<{isVisible?: boolean}>`
+    transition: stroke 0.3s ease-in-out;
+    stroke-dasharray: 1000;
+    stroke-dashoffset: ${props => (props.isVisible? '0' : '1000')};
+    animaition: 
 
-const StyledRect = styled.rect<{ finalHeight: number }>`
-  animation: ${(props) => growHeight(props.finalHeight)} 0.8s ease-in-out; 
 `
+
 interface BarChartProps extends Option {
     onLayoutChange?: (layout: Option['layout']) => void;
     onChartStyleChange?: (style: Option['chartStyle']) => void;
@@ -78,7 +74,7 @@ interface BarChartProps extends Option {
     onLabelChange?: (label: Option['label']) => void;
   }
 
-const BarChart: React.FC<BarChartProps> = ({
+const LineChart: React.FC<BarChartProps> = ({
     data,
     title,
     layout: {
@@ -232,32 +228,37 @@ const BarChart: React.FC<BarChartProps> = ({
                 </g>
                 
                 <g className='chart-layer'>
-                    {data.map((d, i) => {
-                        const barHeight = height - scales.yScale(d.value);
+                    {data.map((_, i) => {
                         const isHovered = hoveredInfo?.index == i;
                         if(isHovered) console.log("hoveredInfo?.index: " + hoveredInfo?.index);
 
-                        return (
-                            // g는 svg 요소 내에 사용되는 것.
-                            // svg에서 그룹을 만드는 역할을 한다.
-                            // trangform은 그룹의 위치를 변환하는 데 사용됨.
-                            // translate(${i * barWidth}, ${height - barHeight}) <- x축, y축 이동 정도 지정
-                            
-                            <g key={i} transform={`translate(${i * barWidth}, ${height - barHeight})`}>
-                                <StyledRect
-                                    width={barWidth - (barWidth / 6)}
-                                    height={barHeight}
-                                    fill={isHovered? hoverColor : color}
-                                    x={barWidth / 12 + 25}
-                                    y={0}
-                                    finalHeight={barHeight}
-                                    onMouseOver={() => setHoveredInfo(prev => ({...prev, index: i}))}
-                                    onMouseMove={(e) => handleMouseMove(e, d.value, d.label, i)}
-                                    onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
-                                    className='bar-rect'
-                                />
-                            </g>
-                        );
+                        if(i < data.length - 1) {
+                            const barHeight1 = height - scales.yScale(data[i].value);
+                            const barHeight2 = height - scales.yScale(data[i+1].value);
+                            return (
+                                // g는 svg 요소 내에 사용되는 것.
+                                // svg에서 그룹을 만드는 역할을 한다.
+                                // trangform은 그룹의 위치를 변환하는 데 사용됨.
+                                // translate(${i * barWidth}, ${height - barHeight}) <- x축, y축 이동 정도 지정
+                                
+                                <g key={i} transform={`translate(${i * barWidth}, ${height})`}>
+                                    <line
+                                        x1={barWidth - (barWidth / 6) - 5}
+                                        y1={-1 * barHeight1}
+                                        x2={barWidth * 2 - 20}
+                                        y2={-1 * barHeight2}
+                                        stroke-width={2}
+                                        stroke={isHovered? hoverColor : color}
+                                        
+                                        // finalHeight={barHeight}
+                                        onMouseOver={() => setHoveredInfo(prev => ({...prev, index: i}))}
+                                        // onMouseMove={(e) => handleMouseMove(e, d.value, d.label, i)}
+                                        onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
+                                        className='line-rect'
+                                    />
+                                </g>
+                            );
+                        }
                     })}
                 </g>
 
@@ -328,4 +329,4 @@ const BarChart: React.FC<BarChartProps> = ({
     );
 };
 
-export default BarChart;
+export default LineChart;

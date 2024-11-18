@@ -269,7 +269,7 @@ const BarChart: React.FC<BarChartProps> = ({
                             y={-25}
                             width={rectWidth}
                         />
-                        <g ref={titleRef}>
+                        <g>
                             <circle 
                                 cx={-15}
                                 cy={-10}
@@ -279,6 +279,7 @@ const BarChart: React.FC<BarChartProps> = ({
                                 stroke-width="7" 
                             />
                             <TooltipTitle
+                                
                                 y={-5}
                             >
                                 {hoveredInfo.label}

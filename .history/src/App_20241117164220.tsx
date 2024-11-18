@@ -3,7 +3,6 @@ import React from 'react';
 import './App.css';
 import BarChart from './components/Chart/BarChart';
 import { Option } from './types/Option';
-import LineChart from './components/Chart/LineChart';
 
 function App() {
   const sampleOption: Option = {

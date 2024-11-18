@@ -67,7 +67,7 @@ const growHeight = (finalHeight: number) => keyframes`
   }
 `;
 
-const StyledRect = styled.rect<{ finalHeight: number }>`
+const StyledLine = styled.rect<{ finalHeight: number }>`
   animation: ${(props) => growHeight(props.finalHeight)} 0.8s ease-in-out; 
 `
 interface BarChartProps extends Option {

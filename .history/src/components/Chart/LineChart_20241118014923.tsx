@@ -5,9 +5,34 @@ import { useGrid } from '../Grid/useGrid';
 import { Option } from '../../types/Option';
 import { darkenColor, lightenColor } from '../../utils/color';
 import '../../App.css';
-import styled, { keyframes } from 'styled-components';
-import { index } from 'd3';
+import styled, { keyframes, css } from 'styled-components';
 
+// 라인 그리기 애니메이션 정의
+const drawLine = keyframes`
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+`;
+
+// 애니메이션이 적용된 라인 컴포넌트
+const AnimatedLine = styled.line<{ isVisible?: boolean }>`
+  stroke-width: 2;
+  transition: stroke 0.3s ease-in-out;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: ${props => (props.isVisible ? '0' : '1000')};
+  animation: ${props =>
+    props.isVisible &&
+    css`
+      ${drawLine} 1s ease-in-out forwards
+    `};
+
+  &:hover {
+    stroke-width: 3;
+  }
+`;
 
 const StyledTitle = styled.text`
   font-size: 24px;
@@ -34,6 +59,19 @@ const StyledTooltip = styled.text<{ x: number; y: number }>`
 const TooltipGroup = styled.g`
   pointer-events: none;
   transition: transform 0.15s ease-out;
+  opacity: 0;
+  animation: fadeIn 0.2s ease-out forwards;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const TooltipRect = styled.rect`
@@ -57,28 +95,15 @@ const TooltipText = styled(TooltipTitle)`
   font-weight: normal;
 `;
 
-const growHeight = (finalHeight: number) => keyframes`
-  from {
-    height: 0;
-    y: ${finalHeight}; // y 값은 아래에서 시작
-  }
-  to {
-    height: ${finalHeight};
-  }
-`;
-
-const StyledRect = styled.rect<{ finalHeight: number }>`
-  animation: ${(props) => growHeight(props.finalHeight)} 0.8s ease-in-out; 
-`
 interface BarChartProps extends Option {
     onLayoutChange?: (layout: Option['layout']) => void;
     onChartStyleChange?: (style: Option['chartStyle']) => void;
     onTitleChange?: (title: Option['title']) => void;
     onAxisChange?: (axis: Option['axis']) => void;
     onLabelChange?: (label: Option['label']) => void;
-  }
+}
 
-const BarChart: React.FC<BarChartProps> = ({
+const LineChart: React.FC<BarChartProps> = ({
     data,
     title,
     layout: {
@@ -101,9 +126,9 @@ const BarChart: React.FC<BarChartProps> = ({
 
     const {yAxis, scales, tickCount} = useAxis({data: values, width: width, height: height, minValue: axis?.yAxis?.min, maxValue: axis?.yAxis?.max});
     const {gridLines} = useGrid({data: values, scales, width, height, horizontalLineCnt: tickCount});
-    // const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
-
+    
     const barWidth = (width - 30) / data.length;
+    const [isVisible, setIsVisible] = useState(false);
 
     const [hoveredInfo, setHoveredInfo] = useState<{
         index: number | null; 
@@ -121,15 +146,17 @@ const BarChart: React.FC<BarChartProps> = ({
     
     const titleRef = useRef<SVGTextElement | null>(null);
     const textRef = useRef<SVGTextElement | null>(null);
+
+    useEffect(() => {
+        setIsVisible(true);
+    }, []);
     
     useEffect(() => {
         if (titleRef.current && textRef.current) {
-        const titleBox = titleRef.current.getBBox();
-        const textBox = textRef.current.getBBox();
-        const maxWidth = Math.max(titleBox.width, textBox.width);
-    
-        // 여유 공간을 주기 위해 +16 정도 추가
-        setRectWidth(maxWidth + 20);
+            const titleBox = titleRef.current.getBBox();
+            const textBox = textRef.current.getBBox();
+            const maxWidth = Math.max(titleBox.width, textBox.width);
+            setRectWidth(maxWidth + 20);
         }
     }, [hoveredInfo, title]);
 
@@ -152,11 +179,9 @@ const BarChart: React.FC<BarChartProps> = ({
     };
 
     return (
-        // svg 요소 안에, 차트를 그린다.
         <div style={{ display: 'inline-block', width: `${width}px`, height: `${height}px`}}>
             <svg width='100%' height='100%' viewBox={`0 0 ${width} ${height + 30}`} style={{ border: '1px solid #ccc', padding: `${padding}px`}}>
-                {               
-                    title && ( // 왜 이건 styled Component가 안될까?(다른 건(ex. 툴팁) 잘 됨) <--- 확인 필요!!
+                {title && (
                     <g className='title-layer'>
                         <rect x="0" y="0" width="100%" height="100%" fill="transparent" />
                         <StyledTitle 
@@ -175,8 +200,9 @@ const BarChart: React.FC<BarChartProps> = ({
                                 y={47}
                             >{title.subTitle}</StyledSubTitle>
                         )}
-                    </g>)
-                }
+                    </g>
+                )}
+
                 <g className='grid-layer'>
                     {gridLines.horizontal.map((el: { id: React.Key | null | undefined; x1: number ; y1: number ; x2: number ; y2: number; }, index: number) => (
                         <line
@@ -186,7 +212,6 @@ const BarChart: React.FC<BarChartProps> = ({
                             x2={el.x2}
                             y2={el.y2}
                             stroke="#e0e0e0"
-                            // strokeDasharray="4 4"
                             strokeWidth={1}
                         />
                     ))}
@@ -210,7 +235,6 @@ const BarChart: React.FC<BarChartProps> = ({
                             x2={barWidth * index + 25}
                             y2={height + 5}
                             stroke="black"
-                            // strokeDasharray="4 4"
                             strokeWidth={1}
                         />
                     ))}
@@ -219,79 +243,77 @@ const BarChart: React.FC<BarChartProps> = ({
                 <g className='axis-layer'>
                     {yAxis.ticks.map((tick) => (
                         <text
+                            key={tick.value}
                             x={20}
                             y={tick.position}
                             textAnchor="end"
                             fontSize={axis?.yAxis?.fontSize || yAxisDefaults.fontSize}
                             fill={axis?.yAxis?.color || yAxisDefaults.color}
                         >
-                        {tick.value}
-                        {axis?.yAxis?.formatter != '' && axis?.yAxis?.formatter}
+                            {tick.value}
+                            {axis?.yAxis?.formatter != '' && axis?.yAxis?.formatter}
                         </text>
                     ))}
                 </g>
                 
                 <g className='chart-layer'>
                     {data.map((d, i) => {
-                        const barHeight = height - scales.yScale(d.value);
                         const isHovered = hoveredInfo?.index == i;
-                        if(isHovered) console.log("hoveredInfo?.index: " + hoveredInfo?.index);
 
-                        return (
-                            // g는 svg 요소 내에 사용되는 것.
-                            // svg에서 그룹을 만드는 역할을 한다.
-                            // trangform은 그룹의 위치를 변환하는 데 사용됨.
-                            // translate(${i * barWidth}, ${height - barHeight}) <- x축, y축 이동 정도 지정
-                            
-                            <g key={i} transform={`translate(${i * barWidth}, ${height - barHeight})`}>
-                                <StyledRect
-                                    width={barWidth - (barWidth / 6)}
-                                    height={barHeight}
-                                    fill={isHovered? hoverColor : color}
-                                    x={barWidth / 12 + 25}
-                                    y={0}
-                                    finalHeight={barHeight}
-                                    onMouseOver={() => setHoveredInfo(prev => ({...prev, index: i}))}
-                                    onMouseMove={(e) => handleMouseMove(e, d.value, d.label, i)}
-                                    onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
-                                    className='bar-rect'
-                                />
-                            </g>
-                        );
+                        if(i < data.length - 1) {
+                            const barHeight1 = height - scales.yScale(data[i].value);
+                            const barHeight2 = height - scales.yScale(data[i+1].value);
+                            return (
+                                <g key={i} transform={`translate(${i * barWidth}, ${height})`}>
+                                    <AnimatedLine
+                                        x1={barWidth - (barWidth / 6) - 5}
+                                        y1={-1 * barHeight1}
+                                        x2={barWidth * 2 - 20}
+                                        y2={-1 * barHeight2}
+                                        stroke={isHovered? hoverColor : color}
+                                        isvisible={isVisible}
+                                        onMouseOver={() => setHoveredInfo(prev => ({...prev, index: i}))}
+                                        onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
+                                        className='line-rect'
+                                    />
+                                </g>
+                            );
+                        }
+                        return null;
                     })}
                 </g>
 
                 <g className='tooltip-layer'>
-                {tooltip && hoveredInfo?.index != null && (
-                    <TooltipGroup transform={`translate(${hoveredInfo.x}, ${hoveredInfo.y})`}>
-                        <TooltipRect
-                            x={-30}
-                            y={-25}
-                            width={rectWidth}
-                        />
-                        <g ref={titleRef}>
-                            <circle 
-                                cx={-15}
-                                cy={-10}
-                                r="3" 
-                                fill={color} 
-                                stroke={color} 
-                                stroke-width="7" 
+                    {tooltip && hoveredInfo?.index != null && (
+                        <TooltipGroup transform={`translate(${hoveredInfo.x}, ${hoveredInfo.y})`}>
+                            <TooltipRect
+                                x={-30}
+                                y={-25}
+                                width={rectWidth}
                             />
-                            <TooltipTitle
-                                y={-5}
+                            <g ref={titleRef}>
+                                <circle 
+                                    cx={-15}
+                                    cy={-10}
+                                    r="3" 
+                                    fill={color} 
+                                    stroke={color} 
+                                    strokeWidth="7" 
+                                />
+                                <TooltipTitle
+                                    y={-5}
+                                >
+                                    {hoveredInfo.label}
+                                </TooltipTitle>
+                            </g>
+                            <TooltipText
+                                ref={textRef}
+                                x={-20}
+                                y={15}
                             >
-                                {hoveredInfo.label}
-                            </TooltipTitle>
-                        </g>
-                        <TooltipText
-                            ref={textRef}
-                            x={-20}
-                            y={15}
-                        >
-                            {title?.subTitle}: {hoveredInfo.value}
-                        </TooltipText>
-                    </TooltipGroup>
+                                {title?.subTitle}: {hoveredInfo.value}
+                            </TooltipText>
+                        </TooltipGroup>
                     )}
                 </g>
 
@@ -302,24 +324,24 @@ const BarChart: React.FC<BarChartProps> = ({
                         x2={width}
                         y2={height}
                         stroke="black"
-                        // strokeDasharray="4 4"
                         strokeWidth={1}
                     />
                 </g>
+
                 <g className='label-layer'>
                     {data.map((d, i) => {
                         let currX = barWidth * i;
                         return (
                             <text
-                            x={currX + barWidth / 2 + 25}
-                            y={height + 20}
-                            textAnchor="middle"
-                            // fontSize="12"
-                            fontWeight="bold"
-                            fill="#333"
-                        >
-                            {d.label}
-                        </text>
+                                key={i}
+                                x={currX + barWidth / 2 + 25}
+                                y={height + 20}
+                                textAnchor="middle"
+                                fontWeight="bold"
+                                fill="#333"
+                            >
+                                {d.label}
+                            </text>
                         );
                     })}
                 </g>
@@ -328,4 +350,4 @@ const BarChart: React.FC<BarChartProps> = ({
     );
 };
 
-export default BarChart;
+export default LineChart;

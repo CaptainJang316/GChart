@@ -67,7 +67,7 @@ const growHeight = (finalHeight: number) => keyframes`
   }
 `;
 
-const StyledRect = styled.rect<{ finalHeight: number }>`
+const StyledLine = styled.line<{ finalHeight: number }>`
   animation: ${(props) => growHeight(props.finalHeight)} 0.8s ease-in-out; 
 `
 interface BarChartProps extends Option {
@@ -237,6 +237,8 @@ const BarChart: React.FC<BarChartProps> = ({
                         const isHovered = hoveredInfo?.index == i;
                         if(isHovered) console.log("hoveredInfo?.index: " + hoveredInfo?.index);
 
+                        if(i)
+
                         return (
                             // g는 svg 요소 내에 사용되는 것.
                             // svg에서 그룹을 만드는 역할을 한다.
@@ -244,7 +246,7 @@ const BarChart: React.FC<BarChartProps> = ({
                             // translate(${i * barWidth}, ${height - barHeight}) <- x축, y축 이동 정도 지정
                             
                             <g key={i} transform={`translate(${i * barWidth}, ${height - barHeight})`}>
-                                <StyledRect
+                                <StyledLine
                                     width={barWidth - (barWidth / 6)}
                                     height={barHeight}
                                     fill={isHovered? hoverColor : color}

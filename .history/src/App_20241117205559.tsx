@@ -56,7 +56,7 @@ function App() {
       {/* => ㄴㄴ. 그냥 단일 SVG로 구현하는 게 훨씬 좋음. */}
 
       <div className="chart-wrapper">
-        <LineChart {...sampleOption}/>
+        <BarChart {...sampleOption}/>
       </div>
     </div>
   );

@@ -67,7 +67,7 @@ const growHeight = (finalHeight: number) => keyframes`
   }
 `;
 
-const StyledRect = styled.rect<{ finalHeight: number }>`
+const StyledLine = styled.line<{ finalHeight: number }>`
   animation: ${(props) => growHeight(props.finalHeight)} 0.8s ease-in-out; 
 `
 interface BarChartProps extends Option {
@@ -244,7 +244,7 @@ const BarChart: React.FC<BarChartProps> = ({
                             // translate(${i * barWidth}, ${height - barHeight}) <- x축, y축 이동 정도 지정
                             
                             <g key={i} transform={`translate(${i * barWidth}, ${height - barHeight})`}>
-                                <StyledRect
+                                <StyledLine
                                     width={barWidth - (barWidth / 6)}
                                     height={barHeight}
                                     fill={isHovered? hoverColor : color}
