@@ -82,7 +82,29 @@ const StyledPath = styled.path<{isVisible?: boolean, totalLength?: number, color
     } 
 `
 
-interface BarChartProps extends Option {
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
+const AnimatedCircle = styled.circle<{ delay: number }>`
+  opacity: 0;
+  transform-origin: center;
+  transform-box: fill-box;
+  ${props =>
+    css`
+      animation: ${fadeIn} 0.3s ease-out forwards;
+      animation-delay: ${props.delay}s;
+    `}
+`;
+
+interface LineChartProps extends Option {
     onLayoutChange?: (layout: Option['layout']) => void;
     onChartStyleChange?: (style: Option['chartStyle']) => void;
     onTitleChange?: (title: Option['title']) => void;
@@ -90,7 +112,7 @@ interface BarChartProps extends Option {
     onLabelChange?: (label: Option['label']) => void;
   }
 
-const LineChart: React.FC<BarChartProps> = ({
+const LineChart: React.FC<LineChartProps> = ({
     data,
     title,
     layout: {
@@ -126,7 +148,7 @@ const LineChart: React.FC<BarChartProps> = ({
     });
     // const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
 
-    const barWidth = (width - 30) / data.length;
+    const barWidth = axis?.xAxis?.boundaryGap? (width - 30) / (data.length-1) : (width - 30) / data.length;
 
     const [isVisible, setIsVisible] = useState(false);
 
@@ -191,10 +213,20 @@ const LineChart: React.FC<BarChartProps> = ({
 
     const createPathData = () => {
         return data.map((d, i) => {
-            if (i === 0) return `M ${barWidth - (barWidth / 6) - 5 + (i * barWidth)} ${scales.yScale(d.value)}`;
-            return `L ${barWidth - (barWidth / 6) - 5 + (i * barWidth)} ${scales.yScale(d.value)}`;
+            if(axis?.xAxis?.boundaryGap) {
+                if (i === 0) return `M ${25} ${scales.yScale(d.value)}`;
+                return `L ${barWidth - (barWidth / 6) - 5 + (i * barWidth)} ${scales.yScale(d.value)}`;
+            } else {
+                if (i === 0) return `M ${barWidth - (barWidth / 6) - 5 + (i * barWidth)} ${scales.yScale(d.value)}`;
+                return `L ${barWidth - (barWidth / 6) - 5 + (i * barWidth)} ${scales.yScale(d.value)}`;
+            }
         }).join(' ');
     };
+    
+    const TOTAL_LINE_ANIMATION = 1.5; 
+    const calculateAnimationDelay = (index:number) => {
+        return (index / (data.length - 1)) * TOTAL_LINE_ANIMATION;
+    }
 
     return (
         // svg 요소 안에, 차트를 그린다.
@@ -288,7 +320,7 @@ const LineChart: React.FC<BarChartProps> = ({
                     />
 
                     {data.map((d, i) => (
-                        <circle
+                        <AnimatedCircle
                             key={i}
                             cx={barWidth - (barWidth / 6) - 5 + (i * barWidth)}
                             cy={scales.yScale(d.value)}
@@ -296,6 +328,7 @@ const LineChart: React.FC<BarChartProps> = ({
                             fill={color}
                             stroke="white"
                             strokeWidth="2"
+                            delay={calculateAnimationDelay(i)}
                             onMouseOver={(e) => handleMouseMove(e, d.value, d.label, i)}
                             onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
                         />

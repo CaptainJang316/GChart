@@ -33,6 +33,7 @@ export type Layout = {
 }
 
 export type XAxis = {
+    boundaryGap?: boolean;
     showSplitLine?: boolean;
     axisLabel?: {
         rotate: number;

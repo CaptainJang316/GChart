@@ -30,6 +30,7 @@ function App() {
     axis: {
       xAxis: {
         showSplitLine: true,
+        boundaryGap: true,
       },
       yAxis: {
         min: 0,
