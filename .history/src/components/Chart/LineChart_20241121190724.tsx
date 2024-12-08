@@ -254,7 +254,7 @@ const LineChart: React.FC<LineChartProps> = ({
         let pathData = '';
         
         // 라인 경로만 생성
-        const firstX = axis?.xAxis?.boundaryGap ? barWidth - (barWidth / 6) - 5 : 25;
+        const firstX = axis?.xAxis?.boundaryGap ? (barWidth / 6) + 5 : 25;
         pathData = `M ${firstX} ${scales.yScale(currLineValues[0])}`;
         
         currLineValues.forEach((d, i) => {

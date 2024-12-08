@@ -41,7 +41,7 @@ export type LineData = {
 }
 
 export type MultiData = {
-    name: string;
+    name?: string;
     value: number[];
     color: string;
     hoverColor?: string;

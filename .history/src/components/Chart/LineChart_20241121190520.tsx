@@ -166,7 +166,7 @@ const LineChart: React.FC<LineChartProps> = ({
     });
     // const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
 
-    const barWidth = axis?.xAxis?.boundaryGap? (width - 30) / (lineData[0].length-1) : (width - 30) / lineData[0].length;
+    const barWidth = axis?.xAxis?.boundaryGap? (width - 30) / lineData[0].length : (width - 30) / (lineData[0].length-1);
 
     const [isVisible, setIsVisible] = useState(false);
 

@@ -2,12 +2,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAxis } from '../Axis/useAxis';
 import { useGrid } from '../Grid/useGrid';
-import { LineChartProps, Option } from '../../types/Option';
+import { SingleBarChartProps } from '../../types/Option';
 import { darkenColor, lightenColor } from '../../utils/color';
 import '../../App.css';
-import styled, { css, keyframes } from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { index } from 'd3';
-import { number } from 'prop-types';
 
 
 const StyledTitle = styled.text`
@@ -58,76 +57,28 @@ const TooltipText = styled(TooltipTitle)`
   font-weight: normal;
 `;
 
-const drawLine = keyframes<{totalLength: number}>`
-    from {
-        stroke-dashoffset: ${props => props.totalLength};
-    }
-    to {
-        stroke-dashoffset: 0;
-    }
-`
-
-const fillArea = keyframes`
-    0% {
-        fill-opacity: 0;
-    }
-    90% {
-        fill-opacity: 0;
-    }
-    100% {
-        fill-opacity: 0.7;  // fill의 최종 투명도
-    }
-`;
-
-const StyledPathArea = styled.path<{isVisible?: boolean, totalLength?: number, color?: string}>`
-    fill: ${props => props.color};
-    fill-opacity: 0;
-    stroke: none;
-    animation: ${props => 
-        props.isVisible && 
-        css`${fillArea} 1.6s ease-out forwards`};
-`;
-
-const StyledPath = styled.path<{isVisible?: boolean, totalLength?: number, color?: string, fillArea?: boolean}>`
-    fill: none;
-    stroke: ${props => props.color};    
-    stroke-width: 2;
-    stroke-dasharray: ${props => props.totalLength}; // <-- 이것과 
-    stroke-dashoffset: ${props => props.totalLength}; // <-- 이것을 둘다 여기서 초기화 지정해줘야 애니메이션 작동함(keyframe에서 from에 설정하면 작동안함)
-    animation: ${props => 
-        props.isVisible && props.totalLength && 
-        css`
-            ${drawLine} 1.5s ease-in-out forwards
-        `};
-
-    &:hover {
-        stroke-width: 3;
-    } 
-`
-
-const fadeIn = keyframes`
+const growHeight = (finalHeight: number) => keyframes`
   from {
-    opacity: 0;
-    transform: scale(0);
+    height: 0;
+    y: ${finalHeight}; // y 값은 아래에서 시작
   }
   to {
-    opacity: 1;
-    transform: scale(1);
+    height: ${finalHeight};
   }
 `;
 
-const AnimatedCircle = styled.circle<{ delay: number }>`
-  opacity: 0;
-  transform-origin: center;
-  transform-box: fill-box;
-  ${props =>
-    css`
-      animation: ${fadeIn} 0.3s ease-out forwards;
-      animation-delay: ${props.delay}s;
-    `}
-`;
+const StyledRect = styled.rect<{ finalHeight: number }>`
+  animation: ${(props) => growHeight(props.finalHeight)} 0.8s ease-in-out; 
+`
+// interface BarChartProps extends Option {
+//     onLayoutChange?: (layout: Option['layout']) => void;
+//     onChartStyleChange?: (style: Option['chartStyle']) => void;
+//     onTitleChange?: (title: Option['title']) => void;
+//     onAxisChange?: (axis: Option['axis']) => void;
+//     onLabelChange?: (label: Option['label']) => void;
+//   }
 
-const LineChart: React.FC<LineChartProps> = ({
+const BarChart: React.FC<SingleBarChartProps> = ({
     data,
     title,
     layout: {
@@ -137,13 +88,12 @@ const LineChart: React.FC<LineChartProps> = ({
     },
     axis,
     chartStyle: {
-        fillArea = false        
+        color = 'green',
+        hoverColor = darkenColor(color, 0.2),
     },
     tooltip = true,
 }) => {
-    const lineData = data.data.map(item => item.value);
-    const lineName = data.data.map(item => item.name);
-    const lineColors = data.data.map(item => item.color);
+    const values = data.value.map(item => item);
     const labels = data.xLabel.map(item => item);
 
     const yAxisDefaults = {
@@ -151,31 +101,18 @@ const LineChart: React.FC<LineChartProps> = ({
         color: '#6E7079'
     };
 
-    const {yAxis, scales, tickCount} = useAxis({
-        data: lineData[0], 
-        width: width, 
-        height: height, 
-        minValue: axis?.yAxis?.min, 
-        maxValue: axis?.yAxis?.max
-    });
-    const {gridLines} = useGrid({
-        data: lineData[0], 
-        scales, width, 
-        height, 
-        horizontalLineCnt: tickCount
-    });
+    const {yAxis, scales, tickCount} = useAxis({data: values, width: width, height: height, minValue: axis?.yAxis?.min, maxValue: axis?.yAxis?.max});
+    const {gridLines} = useGrid({data: values, scales, width, height, horizontalLineCnt: tickCount});
     // const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
 
-    const barWidth = axis?.xAxis?.boundaryGap? (width - 30) / (lineData[0].length-1) : (width - 30) / lineData[0].length;
-
-    const [isVisible, setIsVisible] = useState(false);
+    const barWidth = (width - 30) / values.length;
 
     const [hoveredInfo, setHoveredInfo] = useState<{
         index: number | null; 
         x: number; 
         y: number;
         value?: number;
-        name?: string;
+        label?: string;
     }>({
         index: null,
         x: 0,
@@ -183,44 +120,22 @@ const LineChart: React.FC<LineChartProps> = ({
     });
 
     const [rectWidth, setRectWidth] = useState(0);
-    const [pathLength, setPathLength] = useState<number[]>([]);
     
     const titleRef = useRef<SVGTextElement | null>(null);
     const textRef = useRef<SVGTextElement | null>(null);
-    const pathRefs = useRef<(SVGPathElement | null)[]>([]);
     
-    useEffect(() => {
-        setIsVisible(true);
-    }, []);
-
     useEffect(() => {
         if (titleRef.current && textRef.current) {
         const titleBox = titleRef.current.getBBox();
         const textBox = textRef.current.getBBox();
         const maxWidth = Math.max(titleBox.width, textBox.width);
     
-        // 여유 공간을 주기 위해 +16 정도 추가
+        // 여유 공간을 주기 위해 +20 정도 추가
         setRectWidth(maxWidth + 20);
         }
     }, [hoveredInfo, title]);
 
-    useEffect(() => {
-        let linePathsLength: number[] = [];
-        for (let i = 0; i < lineData.length; i++) {
-            if (pathRefs.current.length > 0) {
-                const length = pathRefs.current[i]!.getTotalLength();
-                linePathsLength = [...linePathsLength, length];
-            }
-        }
-        setPathLength(linePathsLength);
-    }, [data])
-
-    // Example: 특정 path에 ref를 할당
-    const addPathRef = (i: number, element: SVGPathElement | null) => {
-        pathRefs.current[i] = element; // 해당 index에 path 참조 저장
-    };
-
-    const handleMouseMove = (e: React.MouseEvent<SVGElement, MouseEvent>, value: number, name: string, index: number) => {
+    const handleMouseMove = (e: React.MouseEvent<SVGRectElement, MouseEvent>, value: number, label: string, index: number) => {
         const svgElement = e.currentTarget.closest('svg') as SVGSVGElement | null;
         if (svgElement) {
             const point = svgElement.createSVGPoint();
@@ -233,84 +148,10 @@ const LineChart: React.FC<LineChartProps> = ({
                 x: svgPoint.x - 25,
                 y: svgPoint.y - 35,
                 value,
-                name
+                label
             });
         }
     };
-
-    // const createPathData = () => {
-    //     return data.map((d, i) => {
-    //         if(axis?.xAxis?.boundaryGap) {
-    //             if (i === 0) return `M ${25} ${scales.yScale(d.value)}`;
-    //             return `L ${25 + (i * barWidth)} ${scales.yScale(d.value)}`;
-    //         } else {
-    //             if (i === 0) return `M ${barWidth - (barWidth / 6) - 5 + (i * barWidth)} ${scales.yScale(d.value)}`;
-    //             return `L ${barWidth - (barWidth / 6) - 5 + (i * barWidth)} ${scales.yScale(d.value)}`;
-    //         }
-    //     }).join(' ');
-    // };
-
-    const createLinePath = (currLineValues: number[]) => {
-        let pathData = '';
-        
-        // 라인 경로만 생성
-        const firstX = axis?.xAxis?.boundaryGap ? barWidth - (barWidth / 6) - 5 : 25;
-        pathData = `M ${firstX} ${scales.yScale(currLineValues[0])}`;
-        
-        currLineValues.forEach((d, i) => {
-            if (i === 0) return;
-            
-            const x = axis?.xAxis?.boundaryGap 
-                ? barWidth - (barWidth / 6) - 5 + (i * barWidth)
-                : 25 + (i * barWidth);
-            pathData += ` L ${x} ${scales.yScale(d)}`;
-        });
-        
-        return pathData;
-    };
-
-    const createAreaPath = (currLineValues: number[]) => {
-        let pathData = '';
-        
-        // 시작점
-        const firstX = axis?.xAxis?.boundaryGap ? barWidth - (barWidth / 6) - 5 : 25;
-        pathData = `M ${firstX} ${scales.yScale(currLineValues[0])}`;
-        
-        // 상단 라인
-        currLineValues.forEach((d, i) => {
-            if (i === 0) return;
-            
-            const x = axis?.xAxis?.boundaryGap 
-                ? barWidth - (barWidth / 6) - 5 + (i * barWidth)
-                : 25 + (i * barWidth);
-            pathData += ` L ${x} ${scales.yScale(d)}`;
-        });
-        
-        // Area 만들기 위한 작업(path 닫기)
-        // 마지막 지점에서 아래로
-        const lastX = axis?.xAxis?.boundaryGap 
-            ? barWidth - (barWidth / 6) - 5 + ((currLineValues.length - 1) * barWidth)
-            : 25 + ((currLineValues.length - 1) * barWidth);
-        pathData += ` L ${lastX} ${height}`;
-        
-        // 시작점으로 돌아가기
-        pathData += ` L ${firstX} ${height} Z`;
-        
-        return pathData;
-    };
-
-    const getPathPointXSpot = (index: number) => {
-        if(axis?.xAxis?.boundaryGap) {
-            return barWidth - (barWidth / 6) - 5 + (index * barWidth);
-        } else {
-            return 25 + (index * barWidth);
-        }
-    }
-    
-    const TOTAL_LINE_ANIMATION = 1.5; 
-    const calculateAnimationDelay = (index:number) => {
-        return (index / (lineData[0].length - 1)) * TOTAL_LINE_ANIMATION;
-    }
 
     return (
         // svg 요소 안에, 차트를 그린다.
@@ -393,48 +234,33 @@ const LineChart: React.FC<LineChartProps> = ({
                 </g>
                 
                 <g className='chart-layer'>
-                    {/* 영역 채우기 */
-                        lineData.map((v, i) => (
-                            fillArea && (
-                                <StyledPathArea
-                                    d={createAreaPath(v)}
-                                    isVisible={isVisible}
-                                    color={`${hoveredInfo.index !== null ? darkenColor(lineColors[i], 0.2) : lineColors[i]}`}
-                                    onMouseOver={() => setHoveredInfo(prev => ({...prev, index: 0}))}
+                    {values.map((d, i) => {
+                        const barHeight = height - scales.yScale(d);
+                        const isHovered = hoveredInfo?.index == i;
+                        if(isHovered) console.log("hoveredInfo?.index: " + hoveredInfo?.index);
+
+                        return (
+                            // g는 svg 요소 내에 사용되는 것.
+                            // svg에서 그룹을 만드는 역할을 한다.
+                            // trangform은 그룹의 위치를 변환하는 데 사용됨.
+                            // translate(${i * barWidth}, ${height - barHeight}) <- x축, y축 이동 정도 지정
+                            
+                            <g key={i} transform={`translate(${i * barWidth}, ${height - barHeight})`}>
+                                <StyledRect
+                                    width={barWidth - (barWidth / 6)}
+                                    height={barHeight}
+                                    fill={isHovered? hoverColor : color}
+                                    x={barWidth / 12 + 25}
+                                    y={0}
+                                    finalHeight={barHeight}
+                                    onMouseOver={() => setHoveredInfo(prev => ({...prev, index: i}))}
+                                    onMouseMove={(e) => handleMouseMove(e, d, labels[i], i)}
                                     onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
+                                    className='bar-rect'
                                 />
-                            )
-                        ))
-                    }
-                    {/* 라인 그리기 */
-                        lineData.map((v, i) => (
-                            <StyledPath
-                                ref={(el) => addPathRef(i, el)}
-                                d={createLinePath(v)}
-                                isVisible={isVisible}
-                                totalLength={pathLength[i]}
-                                color={hoveredInfo.index !== null ? darkenColor(lineColors[i], 0.2) : lineColors[i]}
-                                onMouseOver={() => setHoveredInfo(prev => ({...prev, index: 0}))}
-                                onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
-                            />
-                        )
-                    )}
-                    {lineData.map((_, i) => (
-                        lineData[i].map((d, j) => (
-                            <AnimatedCircle
-                                key={j}
-                                cx={getPathPointXSpot(j)}
-                                cy={scales.yScale(d)}
-                                r="4"
-                                fill={lineColors[i]}
-                                stroke="white"
-                                strokeWidth="2"
-                                delay={calculateAnimationDelay(i)}
-                                onMouseOver={(e) => handleMouseMove(e, d, lineName[i], i)}
-                                onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
-                            />
-                        ))
-                    ))}
+                            </g>
+                        );
+                    })}
                 </g>
 
                 <g className='tooltip-layer'>
@@ -447,17 +273,17 @@ const LineChart: React.FC<LineChartProps> = ({
                         />
                         <g ref={titleRef}>
                             <circle 
-                                cx={-15}    
+                                cx={-15}
                                 cy={-10}
                                 r="3" 
-                                fill={lineColors[hoveredInfo.index]} 
-                                stroke={lineColors[hoveredInfo.index]} 
-                                strokeWidth="7" 
+                                fill={color} 
+                                stroke={color} 
+                                stroke-width="7" 
                             />
                             <TooltipTitle
                                 y={-5}
                             >
-                                {hoveredInfo.name}
+                                {hoveredInfo.label}
                             </TooltipTitle>
                         </g>
                         <TooltipText
@@ -483,10 +309,11 @@ const LineChart: React.FC<LineChartProps> = ({
                     />
                 </g>
                 <g className='label-layer'>
-                    {lineData[0].map((_, i) => {
+                    {values.map((_, i) => {
+                        let currX = barWidth * i;
                         return (
                             <text
-                            x={getPathPointXSpot(i)}
+                            x={currX + barWidth / 2 + 25}
                             y={height + 20}
                             textAnchor="middle"
                             // fontSize="12"
@@ -503,4 +330,4 @@ const LineChart: React.FC<LineChartProps> = ({
     );
 };
 
-export default LineChart;
+export default BarChart;

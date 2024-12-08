@@ -262,7 +262,7 @@ const LineChart: React.FC<LineChartProps> = ({
             
             const x = axis?.xAxis?.boundaryGap 
                 ? barWidth - (barWidth / 6) - 5 + (i * barWidth)
-                : 25 + (i * barWidth);
+                : 40 + (i * barWidth);
             pathData += ` L ${x} ${scales.yScale(d)}`;
         });
         

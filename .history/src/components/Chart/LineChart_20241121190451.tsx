@@ -166,7 +166,7 @@ const LineChart: React.FC<LineChartProps> = ({
     });
     // const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
 
-    const barWidth = axis?.xAxis?.boundaryGap? (width - 30) / (lineData[0].length-1) : (width - 30) / lineData[0].length;
+    const barWidth = axis?.xAxis?.boundaryGap? (width - 30) / lineData[0].length : (width - 30) / (lineData[0].length-1);
 
     const [isVisible, setIsVisible] = useState(false);
 
@@ -290,7 +290,7 @@ const LineChart: React.FC<LineChartProps> = ({
         // 마지막 지점에서 아래로
         const lastX = axis?.xAxis?.boundaryGap 
             ? barWidth - (barWidth / 6) - 5 + ((currLineValues.length - 1) * barWidth)
-            : 25 + ((currLineValues.length - 1) * barWidth);
+            : ;
         pathData += ` L ${lastX} ${height}`;
         
         // 시작점으로 돌아가기
@@ -301,9 +301,9 @@ const LineChart: React.FC<LineChartProps> = ({
 
     const getPathPointXSpot = (index: number) => {
         if(axis?.xAxis?.boundaryGap) {
-            return barWidth - (barWidth / 6) - 5 + (index * barWidth);
-        } else {
             return 25 + (index * barWidth);
+        } else {
+            return barWidth - (barWidth / 6) - 5 + (index * barWidth);
         }
     }
     

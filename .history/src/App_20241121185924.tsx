@@ -20,7 +20,7 @@ function App() {
       data: [ // line
         {name: 'First', value: [40, 20, 150, 40, 50, 80, 110], color: 'red'},
         {name: 'Second', value: [60, 80, 120, 20, 20, 40, 100],  color: 'green'},     
-        {name: 'Third', value: [80, 60, 20, 10, 90, 50, 150], color: '#5470C6'},        
+        {name: 'Third', value: [80, 60, 20, 10, 90, 50, 150], color: '#5470C6"},        
       ]
     },
     layout: {
@@ -31,7 +31,7 @@ function App() {
     axis: {
       xAxis: {
         showSplitLine: true,
-        boundaryGap: false,
+        boundaryGap: true,
       },
       yAxis: {
         min: 0,

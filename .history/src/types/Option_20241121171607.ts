@@ -41,10 +41,10 @@ export type LineData = {
 }
 
 export type MultiData = {
-    name: string;
+    name?: string;
     value: number[];
-    color: string;
-    hoverColor?: string;
+    color: string[];
+    hoverColor?: string[];
 }
 
 export type TitleAlign = 'start' | 'middle' | 'end';

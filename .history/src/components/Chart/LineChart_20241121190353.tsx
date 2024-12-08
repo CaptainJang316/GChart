@@ -166,7 +166,7 @@ const LineChart: React.FC<LineChartProps> = ({
     });
     // const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
 
-    const barWidth = axis?.xAxis?.boundaryGap? (width - 30) / (lineData[0].length-1) : (width - 30) / lineData[0].length;
+    const barWidth = axis?.xAxis?.boundaryGap? (width - 30) / lineData[0].length : (width - 30) / (lineData[0].length-1);
 
     const [isVisible, setIsVisible] = useState(false);
 
@@ -254,15 +254,15 @@ const LineChart: React.FC<LineChartProps> = ({
         let pathData = '';
         
         // 라인 경로만 생성
-        const firstX = axis?.xAxis?.boundaryGap ? barWidth - (barWidth / 6) - 5 : 25;
+        const firstX = axis?.xAxis?.boundaryGap ? 25 : barWidth - (barWidth / 6) - 5;
         pathData = `M ${firstX} ${scales.yScale(currLineValues[0])}`;
         
         currLineValues.forEach((d, i) => {
             if (i === 0) return;
             
             const x = axis?.xAxis?.boundaryGap 
-                ? barWidth - (barWidth / 6) - 5 + (i * barWidth)
-                : 25 + (i * barWidth);
+                ? 25 + (i * barWidth)
+                : barWidth - (barWidth / 6) - 5 + (i * barWidth);
             pathData += ` L ${x} ${scales.yScale(d)}`;
         });
         
@@ -273,7 +273,7 @@ const LineChart: React.FC<LineChartProps> = ({
         let pathData = '';
         
         // 시작점
-        const firstX = axis?.xAxis?.boundaryGap ? barWidth - (barWidth / 6) - 5 : 25;
+        const firstX = axis?.xAxis?.boundaryGap ? 25 : barWidth - (barWidth / 6) - 5;
         pathData = `M ${firstX} ${scales.yScale(currLineValues[0])}`;
         
         // 상단 라인
@@ -281,16 +281,16 @@ const LineChart: React.FC<LineChartProps> = ({
             if (i === 0) return;
             
             const x = axis?.xAxis?.boundaryGap 
-                ? barWidth - (barWidth / 6) - 5 + (i * barWidth)
-                : 25 + (i * barWidth);
+                ? 25 + (i * barWidth)
+                : barWidth - (barWidth / 6) - 5 + (i * barWidth);
             pathData += ` L ${x} ${scales.yScale(d)}`;
         });
         
         // Area 만들기 위한 작업(path 닫기)
         // 마지막 지점에서 아래로
         const lastX = axis?.xAxis?.boundaryGap 
-            ? barWidth - (barWidth / 6) - 5 + ((currLineValues.length - 1) * barWidth)
-            : 25 + ((currLineValues.length - 1) * barWidth);
+            ? 25 + ((currLineValues.length - 1) * barWidth)
+            : barWidth - (barWidth / 6) - 5 + ((currLineValues.length - 1) * barWidth);
         pathData += ` L ${lastX} ${height}`;
         
         // 시작점으로 돌아가기
@@ -301,9 +301,9 @@ const LineChart: React.FC<LineChartProps> = ({
 
     const getPathPointXSpot = (index: number) => {
         if(axis?.xAxis?.boundaryGap) {
-            return barWidth - (barWidth / 6) - 5 + (index * barWidth);
-        } else {
             return 25 + (index * barWidth);
+        } else {
+            return barWidth - (barWidth / 6) - 5 + (index * barWidth);
         }
     }
     

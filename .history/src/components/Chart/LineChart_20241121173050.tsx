@@ -142,7 +142,6 @@ const LineChart: React.FC<LineChartProps> = ({
     tooltip = true,
 }) => {
     const lineData = data.data.map(item => item.value);
-    const lineName = data.data.map(item => item.name);
     const lineColors = data.data.map(item => item.color);
     const labels = data.xLabel.map(item => item);
 
@@ -175,7 +174,7 @@ const LineChart: React.FC<LineChartProps> = ({
         x: number; 
         y: number;
         value?: number;
-        name?: string;
+        label?: string;
     }>({
         index: null,
         x: 0,
@@ -220,7 +219,7 @@ const LineChart: React.FC<LineChartProps> = ({
         pathRefs.current[i] = element; // 해당 index에 path 참조 저장
     };
 
-    const handleMouseMove = (e: React.MouseEvent<SVGElement, MouseEvent>, value: number, name: string, index: number) => {
+    const handleMouseMove = (e: React.MouseEvent<SVGElement, MouseEvent>, value: number, label: string, index: number) => {
         const svgElement = e.currentTarget.closest('svg') as SVGSVGElement | null;
         if (svgElement) {
             const point = svgElement.createSVGPoint();
@@ -233,7 +232,7 @@ const LineChart: React.FC<LineChartProps> = ({
                 x: svgPoint.x - 25,
                 y: svgPoint.y - 35,
                 value,
-                name
+                label
             });
         }
     };
@@ -254,15 +253,15 @@ const LineChart: React.FC<LineChartProps> = ({
         let pathData = '';
         
         // 라인 경로만 생성
-        const firstX = axis?.xAxis?.boundaryGap ? barWidth - (barWidth / 6) - 5 : 25;
+        const firstX = axis?.xAxis?.boundaryGap ? 25 : barWidth - (barWidth / 6) - 5;
         pathData = `M ${firstX} ${scales.yScale(currLineValues[0])}`;
         
         currLineValues.forEach((d, i) => {
             if (i === 0) return;
             
             const x = axis?.xAxis?.boundaryGap 
-                ? barWidth - (barWidth / 6) - 5 + (i * barWidth)
-                : 25 + (i * barWidth);
+                ? 25 + (i * barWidth)
+                : barWidth - (barWidth / 6) - 5 + (i * barWidth);
             pathData += ` L ${x} ${scales.yScale(d)}`;
         });
         
@@ -273,7 +272,7 @@ const LineChart: React.FC<LineChartProps> = ({
         let pathData = '';
         
         // 시작점
-        const firstX = axis?.xAxis?.boundaryGap ? barWidth - (barWidth / 6) - 5 : 25;
+        const firstX = axis?.xAxis?.boundaryGap ? 25 : barWidth - (barWidth / 6) - 5;
         pathData = `M ${firstX} ${scales.yScale(currLineValues[0])}`;
         
         // 상단 라인
@@ -281,16 +280,16 @@ const LineChart: React.FC<LineChartProps> = ({
             if (i === 0) return;
             
             const x = axis?.xAxis?.boundaryGap 
-                ? barWidth - (barWidth / 6) - 5 + (i * barWidth)
-                : 25 + (i * barWidth);
+                ? 25 + (i * barWidth)
+                : barWidth - (barWidth / 6) - 5 + (i * barWidth);
             pathData += ` L ${x} ${scales.yScale(d)}`;
         });
         
         // Area 만들기 위한 작업(path 닫기)
         // 마지막 지점에서 아래로
         const lastX = axis?.xAxis?.boundaryGap 
-            ? barWidth - (barWidth / 6) - 5 + ((currLineValues.length - 1) * barWidth)
-            : 25 + ((currLineValues.length - 1) * barWidth);
+            ? 25 + ((currLineValues.length - 1) * barWidth)
+            : barWidth - (barWidth / 6) - 5 + ((currLineValues.length - 1) * barWidth);
         pathData += ` L ${lastX} ${height}`;
         
         // 시작점으로 돌아가기
@@ -301,9 +300,9 @@ const LineChart: React.FC<LineChartProps> = ({
 
     const getPathPointXSpot = (index: number) => {
         if(axis?.xAxis?.boundaryGap) {
-            return barWidth - (barWidth / 6) - 5 + (index * barWidth);
-        } else {
             return 25 + (index * barWidth);
+        } else {
+            return barWidth - (barWidth / 6) - 5 + (index * barWidth);
         }
     }
     
@@ -429,8 +428,8 @@ const LineChart: React.FC<LineChartProps> = ({
                                 fill={lineColors[i]}
                                 stroke="white"
                                 strokeWidth="2"
-                                delay={calculateAnimationDelay(i)}
-                                onMouseOver={(e) => handleMouseMove(e, d, lineName[i], i)}
+                                delay={calculateAnimationDelay(j)}
+                                onMouseOver={(e) => handleMouseMove(e, d, labels[j], j)}
                                 onMouseOut={() => setHoveredInfo(prev => ({...prev, index: null}))}
                             />
                         ))
@@ -451,13 +450,13 @@ const LineChart: React.FC<LineChartProps> = ({
                                 cy={-10}
                                 r="3" 
                                 fill={lineColors[hoveredInfo.index]} 
-                                stroke={lineColors[hoveredInfo.index]} 
+                                stroke={lineColors[hoveredInfo?.index]} 
                                 strokeWidth="7" 
                             />
                             <TooltipTitle
                                 y={-5}
                             >
-                                {hoveredInfo.name}
+                                {hoveredInfo.label}
                             </TooltipTitle>
                         </g>
                         <TooltipText

@@ -22,7 +22,6 @@ export interface MultiBarChartProps extends Option {
 
 export interface LineChartProps extends Option {
     data: LineData;
-    chartStyle: Omit<ChartStyle, 'color' | 'hoverColor'>
 }
 
 export type SingleBarData = {
@@ -41,10 +40,8 @@ export type LineData = {
 }
 
 export type MultiData = {
-    name: string;
+    name?: string;
     value: number[];
-    color: string;
-    hoverColor?: string;
 }
 
 export type TitleAlign = 'start' | 'middle' | 'end';
