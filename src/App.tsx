@@ -55,7 +55,7 @@ function App() {
     axis: {
       xAxis: {
         showSplitLine: true,
-        boundaryGap: true,
+        boundaryGap: false,
       },
       yAxis: {
         min: 0,
@@ -109,7 +109,7 @@ function App() {
     axis: {
       xAxis: {
         showSplitLine: true,
-        boundaryGap: false,
+        boundaryGap: true,
       },
       yAxis: {
         min: 0,

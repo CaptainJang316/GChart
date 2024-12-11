@@ -51,9 +51,19 @@ const TooltipTitle = styled.text`
   transition: all 0.15s ease-out;
 `;
 
-const TooltipText = styled(TooltipTitle)`
+const TooltipWapper = styled.div`
+  display: flex;
+  text-align: justify;
+`;
+
+const TooltipLabel = styled(TooltipTitle)`
   font-size: 12px;
   font-weight: normal;
+`;
+
+const TooltipValue = styled(TooltipTitle)`
+  font-size: 18px;
+  text-anchor: end;
 `;
 
 const drawLine = keyframes<{ totalLength: number }>`
@@ -186,11 +196,13 @@ const LineChart: React.FC<LineChartProps> = ({
 
   const [hoveredLineIndex, setHoveredLineIndex] = useState<null | number>(null);
 
-  const [rectWidth, setRectWidth] = useState(0);
+  const [tooltipRectWidth, setTooltipRectWidth] = useState(0);
+  const [tooltipRectHeight, setTooltipRectHight] = useState(0);
+  const [tooltipSpotX, setTooltipSpotX] = useState(0);
+  const [tooltipSpotY, setTooltipSpotY] = useState(0);
+
   const [pathLength, setPathLength] = useState<number[]>([]);
 
-  const titleRef = useRef<SVGTextElement | null>(null);
-  const textRef = useRef<SVGTextElement | null>(null);
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
 
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -199,18 +211,6 @@ const LineChart: React.FC<LineChartProps> = ({
   useEffect(() => {
     setIsVisible(true);
   }, []);
-
-  useEffect(() => {
-    if (titleRef.current && textRef.current) {
-      const titleBox = titleRef.current.getBBox();
-      const textBox = textRef.current.getBBox();
-      const maxWidth = Math.max(titleBox.width, textBox.width);
-
-      // 여유 공간을 주기 위해 +16 정도 추가
-      setRectWidth(maxWidth + 20);
-    }
-  }, [hoveredInfo, title]);
-
   useEffect(() => {
     let linePathsLength: number[] = [];
     for (let i = 0; i < lineData.length; i++) {
@@ -250,7 +250,6 @@ const LineChart: React.FC<LineChartProps> = ({
           : prev,
       0
     );
-    console.log("hoveredLineIndex: " + hoveredLineIndex);
 
     // 모든 라인의 해당 인덱스 값 수집
     const closestValues = lineData.map((line) => line[closestIndex]);
@@ -263,18 +262,23 @@ const LineChart: React.FC<LineChartProps> = ({
       values: closestValues,
       names: closestNames,
     });
+
+    calculateTooltipSize();
+
+    hoveredInfo.x + tooltipRectWidth > width
+      ? setTooltipSpotX(hoveredInfo.x - tooltipRectWidth - 10)
+      : setTooltipSpotX(hoveredInfo.x + 20);
+    hoveredInfo.y + tooltipRectHeight > height + 20
+      ? setTooltipSpotY(hoveredInfo.y - tooltipRectHeight + 20)
+      : setTooltipSpotY(hoveredInfo.y);
   };
 
   const handleMouseLeave = () => {
-    setHoveredInfo({
-      index: null,
-      x: 0,
-      y: 0,
-    });
+    setHoveredInfo((prev) => ({ ...prev, index: null }));
   };
 
-  // 툴팁 너비 계산 로직  <------------------ 이거 다시 계산해야 할 듯. 일단 코드 분석을 안함ㅇㅇ
-  const calculateTooltipWidth = () => {
+  // 툴팁 너비 계산 로직
+  const calculateTooltipSize = () => {
     if (!hoveredInfo.values) return 0;
 
     // 각 라인의 텍스트 길이를 고려한 너비 계산
@@ -285,7 +289,16 @@ const LineChart: React.FC<LineChartProps> = ({
       ...hoveredInfo.values!.map((value) => value.toString().length)
     );
 
-    return Math.max(150, maxNameLength * 10 + maxValueLength * 10);
+    const nameFont = 10;
+    const valueFont = 18;
+
+    const maxWidth = Math.max(
+      140,
+      maxNameLength * nameFont + maxValueLength * valueFont + 15
+    );
+
+    setTooltipRectWidth(maxWidth);
+    setTooltipRectHight(hoveredInfo.values.length * 25 + 40);
   };
 
   // 각 bar의 영역 설정(boundaryGap 여부에 따라 너비 달라짐)
@@ -577,13 +590,13 @@ const LineChart: React.FC<LineChartProps> = ({
           {tooltip && hoveredInfo?.index != null && hoveredInfo.values && (
             <TooltipGroup
               ref={tooltipRef}
-              transform={`translate(${hoveredInfo.x + 30}, ${hoveredInfo.y})`}
+              transform={`translate(${tooltipSpotX}, ${tooltipSpotY})`}
             >
               <TooltipRect
                 x={-10}
                 y={-20}
-                width={calculateTooltipWidth()}
-                height={hoveredInfo.values.length * 25 + 40}
+                width={tooltipRectWidth}
+                height={tooltipRectHeight}
               />
 
               {/* 라벨 정보 */}
@@ -595,9 +608,12 @@ const LineChart: React.FC<LineChartProps> = ({
               {hoveredInfo.values.map((value, index) => (
                 <g key={index} transform={`translate(0, ${25 * (index + 1)})`}>
                   <circle cx={10} cy={0} r="5" fill={lineColors[index]} />
-                  <TooltipText x={20} y={4}>
-                    {hoveredInfo.names![index]}: {value}
-                  </TooltipText>
+                  <TooltipLabel x={20} y={4}>
+                    {hoveredInfo.names![index]}:
+                  </TooltipLabel>
+                  <TooltipValue x={tooltipRectWidth - 20} y={4}>
+                    {value}
+                  </TooltipValue>
                 </g>
               ))}
             </TooltipGroup>
