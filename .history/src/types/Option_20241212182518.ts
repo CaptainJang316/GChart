@@ -18,12 +18,11 @@ export interface SingleBarChartProps extends Option {
 
 export interface MultiBarChartProps extends Option {
     data: MultiBarData;
-    chartStyle: LineChartStyle;
 }
 
 export interface LineChartProps extends Option {
     data: LineData;
-    chartStyle: LineChartStyle;
+    chartStyle: Omit<ChartStyle, 'color' | 'hoverColor'>
 }
 
 export type SingleBarData = {
@@ -89,7 +88,7 @@ export interface ChartStyle {
 }
 
 export interface LineChartStyle extends Omit<ChartStyle, 'color' | 'hoverColor'> {
-    lineStyle: LineStyle;
+    lineStyle: string;
     animation?: string;
     unit?: string;
     fillArea?: boolean;

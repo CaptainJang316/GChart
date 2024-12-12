@@ -424,7 +424,6 @@ const LineChart: React.FC<LineChartProps> = ({
       const cp2X = x2 - (x3 - x1) / 6;
       const cp2Y = y2 - (y3 - y1) / 6;
   
-      console.log("currX: " + currX + ", x2: " + x2);
       // 곡선 연결
       pathData += ` C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x2} ${y2}`;
     }

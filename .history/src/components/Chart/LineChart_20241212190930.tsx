@@ -393,14 +393,14 @@ const LineChart: React.FC<LineChartProps> = ({
     let pathData = "";
     const currXValues: number[] = [];
     let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
-    let firstX = currX;
+    let firstX = =currX
   
     // X 좌표 배열 생성
     currLineValues.forEach(() => {
       currXValues.push(currX);
       currX += barWidth;
     });
-    let x2 = 0;
+  
     // M 명령으로 시작점 설정
     pathData = `M ${currXValues[0]} ${scales.yScale(currLineValues[0])}`;
   
@@ -411,7 +411,7 @@ const LineChart: React.FC<LineChartProps> = ({
       const x1 = currXValues[i]; // 현재 X
       const y1 = scales.yScale(currLineValues[i]); // 현재 Y
   
-      x2 = currXValues[i + 1]; // 다음 X
+      const x2 = currXValues[i + 1]; // 다음 X
       const y2 = scales.yScale(currLineValues[i + 1]); // 다음 Y
   
       const x3 = currXValues[i + 2] || x2; // 다다음 X
@@ -424,14 +424,13 @@ const LineChart: React.FC<LineChartProps> = ({
       const cp2X = x2 - (x3 - x1) / 6;
       const cp2Y = y2 - (y3 - y1) / 6;
   
-      console.log("currX: " + currX + ", x2: " + x2);
       // 곡선 연결
       pathData += ` C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x2} ${y2}`;
     }
 
     // Area 만들기 위한 작업(path 닫기)
     // 1. 마지막 지점에서 아래로
-    pathData += ` L ${x2} ${height}`;
+    pathData += ` L ${currX} ${height}`;
     // 2. 시작점으로 돌아가기
     pathData += ` L ${firstX} ${height} Z`;
 
@@ -630,7 +629,7 @@ const LineChart: React.FC<LineChartProps> = ({
               (v, i) =>
                 fillArea && (
                   <StyledPathArea
-                    d={lineStyle == 'solid'? createSolidAreaPath(v) : createSmoothAreaPath(v)}
+                    d={createSolidAreaPath(v)}
                     isVisible={isVisible}
                     color={`${hoveredLineIndex == i ? darkenColor(lineColors[i], 0.2) : lineColors[i]}`}
                     onMouseOver={() => setHoveredLineIndex(i)}

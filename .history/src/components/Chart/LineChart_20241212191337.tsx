@@ -411,7 +411,7 @@ const LineChart: React.FC<LineChartProps> = ({
       const x1 = currXValues[i]; // 현재 X
       const y1 = scales.yScale(currLineValues[i]); // 현재 Y
   
-      x2 = currXValues[i + 1]; // 다음 X
+      const x2 = currXValues[i + 1]; // 다음 X
       const y2 = scales.yScale(currLineValues[i + 1]); // 다음 Y
   
       const x3 = currXValues[i + 2] || x2; // 다다음 X
@@ -424,7 +424,6 @@ const LineChart: React.FC<LineChartProps> = ({
       const cp2X = x2 - (x3 - x1) / 6;
       const cp2Y = y2 - (y3 - y1) / 6;
   
-      console.log("currX: " + currX + ", x2: " + x2);
       // 곡선 연결
       pathData += ` C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x2} ${y2}`;
     }

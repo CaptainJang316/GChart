@@ -18,12 +18,11 @@ export interface SingleBarChartProps extends Option {
 
 export interface MultiBarChartProps extends Option {
     data: MultiBarData;
-    chartStyle: LineChartStyle;
 }
 
 export interface LineChartProps extends Option {
     data: LineData;
-    chartStyle: LineChartStyle;
+    chartStyle: Omit<ChartStyle, 'color' | 'hoverColor'>
 }
 
 export type SingleBarData = {
@@ -49,7 +48,6 @@ export type MultiData = {
 }
 
 export type TitleAlign = 'start' | 'middle' | 'end';
-type LineStyle = "solid" | "smooth";
 
 export interface Title {
     text: string;
@@ -88,8 +86,9 @@ export interface ChartStyle {
     fillArea?: boolean;
 }
 
-export interface LineChartStyle extends Omit<ChartStyle, 'color' | 'hoverColor'> {
-    lineStyle: LineStyle;
+export interface LineChartStyle ex {
+    color?: string;
+    hoverColor?: string;
     animation?: string;
     unit?: string;
     fillArea?: boolean;
