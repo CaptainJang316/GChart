@@ -452,7 +452,7 @@ const LineChart: React.FC<LineChartProps> = ({
 
     // Area 만들기 위한 작업(path 닫기)
     // 1. 마지막 지점에서 아래로
-    pathData += ` L ${currX} ${height}`;
+    pathData += ` L ${firstX} ${height}`;
     // 2. 시작점으로 돌아가기
     pathData += ` L ${firstX} ${height} Z`;
 

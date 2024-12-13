@@ -323,78 +323,39 @@ const LineChart: React.FC<LineChartProps> = ({
     return pathData;
   };
 
-
   const createSmoothLinePath = (currLineValues: number[]) => {
-    // 시작 X 좌표 설정
-    let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
-    
-    // 첫 번째 데이터 포인트로 경로 시작
-    let pathData = `M ${currX} ${scales.yScale(currLineValues[0])}`;
+    if (currLineValues.length < 2) return "";
 
-    currLineValues.forEach((value, index) => {
-      if (index === 0) return;
+    const path: string[] = [];
+    const n = yCoordinates.length;
 
-      currX += barWidth;
-      
-      // 중간 제어점을 추가하여 실제 곡선 생성
-      const prevY = scales.yScale(currLineValues[index - 1]);
-      const currY = scales.yScale(value);
-      
-      // 제어점을 이용한 곡선 생성 (C 명령어 사용)
-      const controlPointX1 = currX - barWidth / 2;
-      const controlPointY1 = prevY;
-      const controlPointX2 = currX - barWidth / 2;
-      const controlPointY2 = currY;
+    for (let i = 0; i < n - 1; i++) {
+        const x0 = i;
+        const y0 = yCoordinates[i];
+        const x1 = i + 1;
+        const y1 = yCoordinates[i + 1];
 
-      pathData += ` C ${controlPointX1} ${controlPointY1}, 
-                      ${controlPointX2} ${controlPointY2}, 
-                      ${currX} ${currY}`;
-    });
+        // 각 점의 기울기 계산
+        const m0 = i === 0 ? 0 : (y1 - yCoordinates[i - 1]) / 2;
+        const m1 = i === n - 2 ? 0 : (yCoordinates[i + 2] - y0) / 2;
 
-    return pathData;
+        // Bézier 제어점 계산
+        const cp1x = x0 + 1 / 3; // 시작 점 기준 1/3 거리
+        const cp1y = y0 + m0 / 3;
+        const cp2x = x1 - 1 / 3; // 끝 점 기준 1/3 거리
+        const cp2y = y1 - m1 / 3;
+
+        // 시작 명령어 추가
+        if (i === 0) {
+            path.push(`M ${x0},${y0}`);
+        }
+
+        // Cubic Bézier 명령어 추가
+        path.push(`C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x1},${y1}`);
+    }
+
+    return path.join(" ");
   };
-
-  // const createSmoothLinePath = (currLineValues: number[]) => {
-  //   let pathData = "";
-  //   const currXValues: number[] = [];
-  //   let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
-  
-  //   // X 좌표 배열 생성
-  //   currLineValues.forEach(() => {
-  //     currXValues.push(currX);
-  //     currX += barWidth;
-  //   });
-  
-  //   // M 명령으로 시작점 설정
-  //   pathData = `M ${currXValues[0]} ${scales.yScale(currLineValues[0])}`;
-  
-  //   for (let i = 0; i < currLineValues.length - 1; i++) {
-  //     const x0 = currXValues[i - 1] || currXValues[i]; // 이전 X
-  //     const y0 = scales.yScale(currLineValues[i - 1] || currLineValues[i]); // 이전 Y
-  
-  //     const x1 = currXValues[i]; // 현재 X
-  //     const y1 = scales.yScale(currLineValues[i]); // 현재 Y
-  
-  //     const x2 = currXValues[i + 1]; // 다음 X
-  //     const y2 = scales.yScale(currLineValues[i + 1]); // 다음 Y
-  
-  //     const x3 = currXValues[i + 2] || x2; // 다다음 X
-  //     const y3 = scales.yScale(currLineValues[i + 2] || currLineValues[i + 1]); // 다다음 Y
-  
-  //     // 제어점 계산 (Catmull-Rom 스플라인, 개선된 방식)
-  //     const tension = 0.5; // 곡선의 부드러움 조절 (0.5는 기본값)
-  //     const cp1X = x1 + tension * (x2 - x0) / 2;
-  //     const cp1Y = y1 + tension * (y2 - y0) / 2;
-  
-  //     const cp2X = x2 - tension * (x3 - x1) / 2;
-  //     const cp2Y = y2 - tension * (y3 - y1) / 2;
-  
-  //     // 곡선 연결
-  //     pathData += ` C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x2} ${y2}`;
-  //   }
-  
-  //   return pathData;
-  // };
 
   const createSolidAreaPath = (currLineValues: number[]) => {
     let pathData = "";
@@ -422,37 +383,48 @@ const LineChart: React.FC<LineChartProps> = ({
   };
 
   const createSmoothAreaPath = (currLineValues: number[]) => {
+    let pathData = "";
+    const currXValues: number[] = [];
+    let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
+    let firstX = currX;
 
-        // 시작 X 좌표 설정
-        let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
-        let firstX = currX;
-    
-        // 첫 번째 데이터 포인트로 경로 시작
-        let pathData = `M ${currX} ${scales.yScale(currLineValues[0])}`;
-    
-        currLineValues.forEach((value, index) => {
-          if (index === 0) return;
-    
-          currX += barWidth;
-          
-          // 중간 제어점을 추가하여 실제 곡선 생성
-          const prevY = scales.yScale(currLineValues[index - 1]);
-          const currY = scales.yScale(value);
-          
-          // 제어점을 이용한 곡선 생성 (C 명령어 사용)
-          const controlPointX1 = currX - barWidth / 2;
-          const controlPointY1 = prevY;
-          const controlPointX2 = currX - barWidth / 2;
-          const controlPointY2 = currY;
-    
-          pathData += ` C ${controlPointX1} ${controlPointY1}, 
-                          ${controlPointX2} ${controlPointY2}, 
-                          ${currX} ${currY}`;
-        });
+    // X 좌표 배열 생성
+    currLineValues.forEach(() => {
+      currXValues.push(currX);
+      currX += barWidth;
+    });
+
+    // M 명령으로 시작점 설정
+    pathData = `M ${currXValues[0]} ${scales.yScale(currLineValues[0])}`;
+
+    for (let i = 0; i < currLineValues.length - 1; i++) {
+      const x0 = currXValues[i - 1] || currXValues[i]; // 이전 X
+      const y0 = scales.yScale(currLineValues[i - 1] || currLineValues[i]); // 이전 Y
+
+      const x1 = currXValues[i]; // 현재 X
+      const y1 = scales.yScale(currLineValues[i]); // 현재 Y
+
+      const x2 = currXValues[i + 1]; // 다음 X
+      const y2 = scales.yScale(currLineValues[i + 1]); // 다음 Y
+
+      const x3 = currXValues[i + 2] || x2; // 다다음 X
+      const y3 = scales.yScale(currLineValues[i + 2] || currLineValues[i + 1]); // 다다음 Y
+
+      // 제어점 계산 (Catmull-Rom 스플라인)
+      const cp1X = x1 + (x2 - x0) / 6;
+      const cp1Y = y1 + (y2 - y0) / 6;
+
+      const cp2X = x2 - (x3 - x1) / 6;
+      const cp2Y = y2 - (y3 - y1) / 6;
+
+      console.log("currX: " + currX + ", x2: " + x2);
+      // 곡선 연결
+      pathData += ` C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x2} ${y2}`;
+    }
 
     // Area 만들기 위한 작업(path 닫기)
     // 1. 마지막 지점에서 아래로
-    pathData += ` L ${currX} ${height}`;
+    pathData += ` L ${currXValues[currXValues.length - 1]} ${height}`;
     // 2. 시작점으로 돌아가기
     pathData += ` L ${firstX} ${height} Z`;
 

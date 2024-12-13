@@ -422,10 +422,38 @@ const LineChart: React.FC<LineChartProps> = ({
   };
 
   const createSmoothAreaPath = (currLineValues: number[]) => {
+    let pathData = "";
+    const currXValues: number[] = [];
+    let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
+    let firstX = currX;
 
         // 시작 X 좌표 설정
         let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
-        let firstX = currX;
+            // 시작 X 좌표 설정
+    let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
+    
+    // 첫 번째 데이터 포인트로 경로 시작
+    let pathData = `M ${currX} ${scales.yScale(currLineValues[0])}`;
+
+    currLineValues.forEach((value, index) => {
+      if (index === 0) return;
+
+      currX += barWidth;
+      
+      // 중간 제어점을 추가하여 실제 곡선 생성
+      const prevY = scales.yScale(currLineValues[index - 1]);
+      const currY = scales.yScale(value);
+      
+      // 제어점을 이용한 곡선 생성 (C 명령어 사용)
+      const controlPointX1 = currX - barWidth / 2;
+      const controlPointY1 = prevY;
+      const controlPointX2 = currX - barWidth / 2;
+      const controlPointY2 = currY;
+
+      pathData += ` C ${controlPointX1} ${controlPointY1}, 
+                      ${controlPointX2} ${controlPointY2}, 
+                      ${currX} ${currY}`;
+    });
     
         // 첫 번째 데이터 포인트로 경로 시작
         let pathData = `M ${currX} ${scales.yScale(currLineValues[0])}`;
@@ -452,7 +480,7 @@ const LineChart: React.FC<LineChartProps> = ({
 
     // Area 만들기 위한 작업(path 닫기)
     // 1. 마지막 지점에서 아래로
-    pathData += ` L ${currX} ${height}`;
+    pathData += ` L ${currXValues[currXValues.length - 1]} ${height}`;
     // 2. 시작점으로 돌아가기
     pathData += ` L ${firstX} ${height} Z`;
 
