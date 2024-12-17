@@ -306,11 +306,15 @@ const LineChart: React.FC<LineChartProps> = ({
     ? (width - 30) / lineData[0].length
     : (width - 30) / (lineData[0].length - 1);
 
+  let firstX: number;
+  let currX: number;
   const createSolidLinePath = (currLineValues: number[]) => {
     let pathData = "";
 
     // 라인 경로만 생성
-    let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
+    currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
+    firstX = currX;
+
     pathData = `M ${currX} ${scales.yScale(currLineValues[0])}`;
 
     currLineValues.forEach((d, i) => {
@@ -323,95 +327,97 @@ const LineChart: React.FC<LineChartProps> = ({
     return pathData;
   };
 
+  const getLineStatus = (currV: number, nextV: number) => {
+    return currV < nextV ? "increase" : currV > nextV ? "decrease" : "same";
+  };
 
   const createSmoothLinePath = (currLineValues: number[]) => {
-    // 시작 X 좌표 설정
+    let pathData = "";
+    const currXValues: number[] = [];
     let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
-    
-    // 첫 번째 데이터 포인트로 경로 시작
-    let pathData = `M ${currX} ${scales.yScale(currLineValues[0])}`;
 
-    currLineValues.forEach((value, index) => {
-      if (index === 0) return;
-
+    // X 좌표 배열 생성
+    currLineValues.forEach(() => {
+      currXValues.push(currX);
       currX += barWidth;
-      
-      // 중간 제어점을 추가하여 실제 곡선 생성
-      const prevY = scales.yScale(currLineValues[index - 1]);
-      const currY = scales.yScale(value);
-      
-      // 제어점을 이용한 곡선 생성 (C 명령어 사용)
-      const controlPointX1 = currX - barWidth / 2;
-      const controlPointY1 = prevY;
-      const controlPointX2 = currX - barWidth / 2;
-      const controlPointY2 = currY;
-
-      pathData += ` C ${controlPointX1} ${controlPointY1}, 
-                      ${controlPointX2} ${controlPointY2}, 
-                      ${currX} ${currY}`;
     });
+
+    // M 명령으로 시작점 설정
+    pathData = `M ${currXValues[0]} ${scales.yScale(currLineValues[0])}`;
+
+    let prevStatus = getLineStatus(currLineValues[0], currLineValues[1]);
+    let currStatus;
+    for (let i = 0; i < currLineValues.length - 1; i++) {
+      let isPass = false;
+
+      if (i < currLineValues.length - 1) {
+        currStatus = getLineStatus(
+          currLineValues[i + 1],
+          currLineValues[i + 2]
+        );
+
+        // 이 '다음 좌표'가 상태가 바뀌는 지점(변곡점)이면,
+        // => 다음 좌표가 정확히 변곡점에 위치할 수 있도록 곡선 path 생성
+        if (prevStatus != currStatus) {
+          isPass = true;
+          prevStatus = currStatus;
+
+          const x0 = currXValues[i]; // 현재 X
+          const y0 = scales.yScale(currLineValues[i]); // 현재 Y
+
+          const x1 = currXValues[i + 1]; // 다음 X
+          const y1 = scales.yScale(currLineValues[i + 1]); // 다음 Y
+
+          // 제어점 계산 (변곡점 보정)
+          const cp1X = x0 + (x1 - x0) / 3; // 현재와 다음 점 사이 1/3 지점
+          const cp1Y = y0;
+
+          const cp2X = x1 - (x1 - x0) / 3; // 현재와 다음 점 사이 2/3 지점
+          const cp2Y = y1;
+
+          pathData += `C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x1} ${y1}`;
+        }
+      }
+
+      // 그렇지 않다면(증가/감소 상태 유지)
+      if (!isPass) {
+        const x0 = currXValues[i - 1] || currXValues[i]; // 이전 X
+        const y0 = scales.yScale(currLineValues[i - 1] || currLineValues[i]); // 이전 Y
+
+        const x1 = currXValues[i]; // 현재 X
+        const y1 = scales.yScale(currLineValues[i]); // 현재 Y
+
+        const x2 = currXValues[i + 1]; // 다음 X
+        const y2 = scales.yScale(currLineValues[i + 1]); // 다음 Y
+
+        const x3 = currXValues[i + 2] || x2; // 다다음 X
+        const y3 = scales.yScale(
+          currLineValues[i + 2] || currLineValues[i + 1]
+        ); // 다다음 Y
+
+        // 제어점 계산 (Catmull-Rom 스플라인)
+        const cp1X = x1 + (x2 - x0) / 6;
+        let cp1Y;
+        if (
+          (currStatus == "increase" && y0 <= y1) ||
+          (currStatus == "decrease" && y0 >= y1) ||
+          (currStatus == "same" && y0 != y1)
+        ) {
+          cp1Y = y1;
+        } else cp1Y = y1 + (y2 - y0) / 5;
+
+        const cp2X = x2 - (x3 - x1) / 6;
+        const cp2Y = y2 - (y3 - y1) / 6;
+
+        // 곡선 연결
+        pathData += `C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x2} ${y2}`;
+      }
+    }
 
     return pathData;
   };
 
-  // const createSmoothLinePath = (currLineValues: number[]) => {
-  //   let pathData = "";
-  //   const currXValues: number[] = [];
-  //   let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
-  
-  //   // X 좌표 배열 생성
-  //   currLineValues.forEach(() => {
-  //     currXValues.push(currX);
-  //     currX += barWidth;
-  //   });
-  
-  //   // M 명령으로 시작점 설정
-  //   pathData = `M ${currXValues[0]} ${scales.yScale(currLineValues[0])}`;
-  
-  //   for (let i = 0; i < currLineValues.length - 1; i++) {
-  //     const x0 = currXValues[i - 1] || currXValues[i]; // 이전 X
-  //     const y0 = scales.yScale(currLineValues[i - 1] || currLineValues[i]); // 이전 Y
-  
-  //     const x1 = currXValues[i]; // 현재 X
-  //     const y1 = scales.yScale(currLineValues[i]); // 현재 Y
-  
-  //     const x2 = currXValues[i + 1]; // 다음 X
-  //     const y2 = scales.yScale(currLineValues[i + 1]); // 다음 Y
-  
-  //     const x3 = currXValues[i + 2] || x2; // 다다음 X
-  //     const y3 = scales.yScale(currLineValues[i + 2] || currLineValues[i + 1]); // 다다음 Y
-  
-  //     // 제어점 계산 (Catmull-Rom 스플라인, 개선된 방식)
-  //     const tension = 0.5; // 곡선의 부드러움 조절 (0.5는 기본값)
-  //     const cp1X = x1 + tension * (x2 - x0) / 2;
-  //     const cp1Y = y1 + tension * (y2 - y0) / 2;
-  
-  //     const cp2X = x2 - tension * (x3 - x1) / 2;
-  //     const cp2Y = y2 - tension * (y3 - y1) / 2;
-  
-  //     // 곡선 연결
-  //     pathData += ` C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x2} ${y2}`;
-  //   }
-  
-  //   return pathData;
-  // };
-
-  const createSolidAreaPath = (currLineValues: number[]) => {
-    let pathData = "";
-
-    // 시작점
-    let firstX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
-    pathData = `M ${firstX} ${scales.yScale(currLineValues[0])}`;
-    let currX = firstX;
-
-    // 상단 라인
-    currLineValues.forEach((d, i) => {
-      if (i === 0) return;
-
-      currX += barWidth;
-      pathData += ` L ${currX} ${scales.yScale(d)}`;
-    });
-
+  const createSolidAreaPath = (pathData: string) => {
     // Area 만들기 위한 작업(path 닫기)
     // 1. 마지막 지점에서 아래로
     pathData += ` L ${currX} ${height}`;
@@ -421,35 +427,7 @@ const LineChart: React.FC<LineChartProps> = ({
     return pathData;
   };
 
-  const createSmoothAreaPath = (currLineValues: number[]) => {
-
-        // 시작 X 좌표 설정
-        let currX = axis?.xAxis?.boundaryGap ? barWidth / 2 + 25 : 25;
-        let firstX = currX;
-    
-        // 첫 번째 데이터 포인트로 경로 시작
-        let pathData = `M ${currX} ${scales.yScale(currLineValues[0])}`;
-    
-        currLineValues.forEach((value, index) => {
-          if (index === 0) return;
-    
-          currX += barWidth;
-          
-          // 중간 제어점을 추가하여 실제 곡선 생성
-          const prevY = scales.yScale(currLineValues[index - 1]);
-          const currY = scales.yScale(value);
-          
-          // 제어점을 이용한 곡선 생성 (C 명령어 사용)
-          const controlPointX1 = currX - barWidth / 2;
-          const controlPointY1 = prevY;
-          const controlPointX2 = currX - barWidth / 2;
-          const controlPointY2 = currY;
-    
-          pathData += ` C ${controlPointX1} ${controlPointY1}, 
-                          ${controlPointX2} ${controlPointY2}, 
-                          ${currX} ${currY}`;
-        });
-
+  const createSmoothAreaPath = (pathData: string) => {
     // Area 만들기 위한 작업(path 닫기)
     // 1. 마지막 지점에서 아래로
     pathData += ` L ${currX} ${height}`;
@@ -646,45 +624,51 @@ const LineChart: React.FC<LineChartProps> = ({
           onMouseLeave={handleMouseLeave}
         >
           {
-            /* 영역 채우기 */
-            lineData.map(
-              (v, i) =>
-                fillArea && (
-                  <StyledPathArea
-                    d={
-                      lineStyle == "solid"
-                        ? createSolidAreaPath(v)
-                        : createSmoothAreaPath(v)
-                    }
+            /* 라인 그리기 */
+            lineData.map((v, i) => {
+              const path =
+                lineStyle == "solid"
+                  ? createSolidLinePath(v)
+                  : createSmoothLinePath(v);
+
+              let pathArea = "";
+              if (fillArea) {
+                pathArea =
+                  lineStyle == "solid"
+                    ? createSolidAreaPath(path)
+                    : createSmoothAreaPath(path);
+              }
+
+              return (
+                <g>
+                  {
+                    /* 영역 채우기 */
+                    fillArea && (
+                      <StyledPathArea
+                        d={pathArea}
+                        isVisible={isVisible}
+                        color={`${hoveredLineIndex == i ? darkenColor(lineColors[i], 0.2) : lineColors[i]}`}
+                        onMouseOver={() => setHoveredLineIndex(i)}
+                        onMouseOut={() => setHoveredLineIndex(null)}
+                      />
+                    )
+                  }
+                  <StyledPath
+                    ref={(el) => addPathRef(i, el)}
+                    d={path}
                     isVisible={isVisible}
-                    color={`${hoveredLineIndex == i ? darkenColor(lineColors[i], 0.2) : lineColors[i]}`}
+                    totalLength={pathLength[i]}
+                    color={
+                      hoveredLineIndex == i
+                        ? darkenColor(lineColors[i], 0.2)
+                        : lineColors[i]
+                    }
                     onMouseOver={() => setHoveredLineIndex(i)}
                     onMouseOut={() => setHoveredLineIndex(null)}
                   />
-                )
-            )
-          }
-          {
-            /* 라인 그리기 */
-            lineData.map((v, i) => (
-              <StyledPath
-                ref={(el) => addPathRef(i, el)}
-                d={
-                  lineStyle == "solid"
-                    ? createSolidLinePath(v)
-                    : createSmoothLinePath(v)
-                }
-                isVisible={isVisible}
-                totalLength={pathLength[i]}
-                color={
-                  hoveredLineIndex == i
-                    ? darkenColor(lineColors[i], 0.2)
-                    : lineColors[i]
-                }
-                onMouseOver={() => setHoveredLineIndex(i)}
-                onMouseOut={() => setHoveredLineIndex(null)}
-              />
-            ))
+                </g>
+              );
+            })
           }
           {lineData.map((_, i) =>
             lineData[i].map((d, j) => (
@@ -692,9 +676,9 @@ const LineChart: React.FC<LineChartProps> = ({
                 key={j}
                 cx={getPathPointXSpot(j)}
                 cy={scales.yScale(d)}
-                r="4"
-                fill={lineColors[i]}
-                stroke="white"
+                r="3"
+                fill="white"
+                stroke={lineColors[i]}
                 strokeWidth="2"
                 delay={calculateAnimationDelay(i)}
                 onMouseOver={() => setHoveredLineIndex(i)}

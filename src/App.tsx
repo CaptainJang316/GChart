@@ -32,7 +32,7 @@ function App() {
         // line
         {
           name: "First",
-          value: [40, 20, 150, 40, 50, 80, 110, 30, 30, 20],
+          value: [10, 20, 30, 70, 90, 150, 110, 70, 50, 20],
           color: "red",
         },
         {
@@ -68,7 +68,7 @@ function App() {
     chartStyle: {
       // color: "#5470C6",
       lineStyle: "smooth",
-      fillArea: true,
+      fillArea: false,
     },
     tooltip: true,
     label: {
