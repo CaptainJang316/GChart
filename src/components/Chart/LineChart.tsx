@@ -350,6 +350,23 @@ const LineChart: React.FC<LineChartProps> = ({
     for (let i = 0; i < currLineValues.length - 1; i++) {
       let isPass = false;
 
+      const x0 = currXValues[i - 1] || currXValues[i]; // 이전 X
+      const y0 = scales.yScale(currLineValues[i - 1] || currLineValues[i]); // 이전 Y
+
+      const x1 = currXValues[i]; // 현재 X
+      const y1 = scales.yScale(currLineValues[i]); // 현재 Y
+
+      const x2 = currXValues[i + 1]; // 다음 X
+      const y2 = scales.yScale(currLineValues[i + 1]); // 다음 Y
+
+      const x3 = currXValues[i + 2] || x2; // 다다음 X
+      const y3 = scales.yScale(currLineValues[i + 2] || currLineValues[i + 1]); // 다다음 Y
+
+      let cp1X;
+      let cp1Y;
+      let cp2X;
+      let cp2Y;
+
       if (i < currLineValues.length - 1) {
         currStatus = getLineStatus(
           currLineValues[i + 1],
@@ -362,42 +379,20 @@ const LineChart: React.FC<LineChartProps> = ({
           isPass = true;
           prevStatus = currStatus;
 
-          const x0 = currXValues[i]; // 현재 X
-          const y0 = scales.yScale(currLineValues[i]); // 현재 Y
+          // 제어점 계산 (Catmull-Rom 스플라인)
+          cp1X = x1 + (x2 - x0) / 5;
+          if (y1 == y2) cp1Y = y1;
+          else cp1Y = y1 + (y2 - y0) / 5;
 
-          const x1 = currXValues[i + 1]; // 다음 X
-          const y1 = scales.yScale(currLineValues[i + 1]); // 다음 Y
-
-          // 제어점 계산 (변곡점 보정)
-          const cp1X = x0 + (x1 - x0) / 3; // 현재와 다음 점 사이 1/3 지점
-          const cp1Y = y0;
-
-          const cp2X = x1 - (x1 - x0) / 3; // 현재와 다음 점 사이 2/3 지점
-          const cp2Y = y1;
-
-          pathData += `C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x1} ${y1}`;
+          cp2X = x2 - (x3 - x1) / 5;
+          cp2Y = y2;
         }
       }
 
       // 그렇지 않다면(증가/감소 상태 유지)
       if (!isPass) {
-        const x0 = currXValues[i - 1] || currXValues[i]; // 이전 X
-        const y0 = scales.yScale(currLineValues[i - 1] || currLineValues[i]); // 이전 Y
-
-        const x1 = currXValues[i]; // 현재 X
-        const y1 = scales.yScale(currLineValues[i]); // 현재 Y
-
-        const x2 = currXValues[i + 1]; // 다음 X
-        const y2 = scales.yScale(currLineValues[i + 1]); // 다음 Y
-
-        const x3 = currXValues[i + 2] || x2; // 다다음 X
-        const y3 = scales.yScale(
-          currLineValues[i + 2] || currLineValues[i + 1]
-        ); // 다다음 Y
-
         // 제어점 계산 (Catmull-Rom 스플라인)
-        const cp1X = x1 + (x2 - x0) / 6;
-        let cp1Y;
+        cp1X = x1 + (x2 - x0) / 6;
         if (
           (currStatus == "increase" && y0 <= y1) ||
           (currStatus == "decrease" && y0 >= y1) ||
@@ -406,12 +401,12 @@ const LineChart: React.FC<LineChartProps> = ({
           cp1Y = y1;
         } else cp1Y = y1 + (y2 - y0) / 5;
 
-        const cp2X = x2 - (x3 - x1) / 6;
-        const cp2Y = y2 - (y3 - y1) / 6;
-
-        // 곡선 연결
-        pathData += `C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x2} ${y2}`;
+        cp2X = x2 - (x3 - x1) / 5;
+        cp2Y = y2 - (y3 - y1) / 5;
       }
+
+      // 곡선 연결
+      pathData += `C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${x2} ${y2}`;
     }
 
     return pathData;
