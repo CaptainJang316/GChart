@@ -2,9 +2,14 @@
 import React from "react";
 import "./App.css";
 import BarChart from "./components/Chart/BarChart";
-import { LineChartProps, SingleBarChartProps } from "./types/Option";
+import {
+  LineChartProps,
+  PieChartProps,
+  SingleBarChartProps,
+} from "./types/Option";
 import LineChart from "./components/Chart/LineChart";
 import { xml } from "d3";
+import PieChart from "./components/Chart/PieChart";
 
 function App() {
   const lineOption: LineChartProps = {
@@ -131,6 +136,35 @@ function App() {
     },
   };
 
+  const pieOption: PieChartProps = {
+    type: "pie",
+    title: {
+      text: "Sample Chart",
+      subTitle: "Account",
+      titleAlign: "start",
+    },
+    data: {
+      labels: ["data1", "data2", "data3", "data4", "data5"],
+      values: [20, 10, 30, 40, 50],
+      colors: ["red", "blue", "green", "gold", "pink"],
+    },
+    layout: {
+      width: 700,
+      height: 500,
+      padding: 15,
+    },
+    chartStyle: {
+      innerRadius: 80, // 도넛 차트를 위한 내부 반지름
+      startAngle: 0, // 시작 각도
+      padAngle: 5,
+    },
+    tooltip: true,
+    label: {
+      show: true,
+      position: "mid",
+    },
+  };
+
   return (
     <div>
       <h1>G-Chart</h1>
@@ -142,6 +176,9 @@ function App() {
       </div>
       <div className="chart-wrapper">
         <BarChart {...barOption} />
+      </div>
+      <div className="chart-wrapper">
+        <PieChart {...pieOption} />
       </div>
     </div>
   );

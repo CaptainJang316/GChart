@@ -380,9 +380,9 @@ const LineChart: React.FC<LineChartProps> = ({
           prevStatus = currStatus;
 
           // 제어점 계산 (Catmull-Rom 스플라인)
-          cp1X = x1 + (x2 - x0) / 5;
+          cp1X = x1 + (x2 - x0) / 6;
           if (y1 == y2) cp1Y = y1;
-          else cp1Y = y1 + (y2 - y0) / 5;
+          else cp1Y = y1 + (y2 - y0) / 6;
 
           cp2X = x2 - (x3 - x1) / 5;
           cp2Y = y2;
@@ -399,10 +399,10 @@ const LineChart: React.FC<LineChartProps> = ({
           (currStatus == "same" && y0 != y1)
         ) {
           cp1Y = y1;
-        } else cp1Y = y1 + (y2 - y0) / 5;
+        } else cp1Y = y1 + (y2 - y0) / 6;
 
-        cp2X = x2 - (x3 - x1) / 5;
-        cp2Y = y2 - (y3 - y1) / 5;
+        cp2X = x2 - (x3 - x1) / 6;
+        cp2Y = y2 - (y3 - y1) / 6;
       }
 
       // 곡선 연결
