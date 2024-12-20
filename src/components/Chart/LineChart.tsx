@@ -18,7 +18,7 @@ const StyledSubTitle = styled.text`
   font-size: 16px;
 `;
 
-const StyledTooltip = styled.text<{ x: number; y: number }>`
+const StyledTooltip = styled.text`
   fill: white;
   font-size: 14px;
   font-weight: bold;
@@ -26,21 +26,22 @@ const StyledTooltip = styled.text<{ x: number; y: number }>`
   padding: 5px 10px;
   border-radius: 5px;
   pointer-events: none;
-  transform: translate(${(props) => props.x}px, ${(props) => props.y}px);
   white-space: nowrap;
   z-index: 10000;
 `;
 
-const TooltipGroup = styled.g`
+const TooltipGroup = styled.g<{ isInitialSpot: boolean }>`
   pointer-events: none;
-  transition: transform 0.15s ease-out;
+  ${({ isInitialSpot }) =>
+    isInitialSpot
+      ? "transition: none;"
+      : "transition: transform 0.1s ease-out;"}
 `;
 
 const TooltipRect = styled.rect`
   fill: rgba(0, 0, 0, 0.7);
   rx: 5;
   ry: 5;
-  transition: all 0.15s ease-out;
 `;
 
 const TooltipTitle = styled.text`
@@ -48,7 +49,6 @@ const TooltipTitle = styled.text`
   font-size: 14px;
   font-weight: bold;
   text-anchor: start;
-  transition: all 0.15s ease-out;
 `;
 
 const TooltipWapper = styled.div`
@@ -182,24 +182,30 @@ const LineChart: React.FC<LineChartProps> = ({
 
   const [isVisible, setIsVisible] = useState(false);
 
+  const [prevHoveredSpot, setPrevHoveredSpot] = useState<{
+    x: number | null;
+    y: number | null;
+  }>({
+    x: null,
+    y: null,
+  });
+
   const [hoveredInfo, setHoveredInfo] = useState<{
     index: number | null;
-    x: number;
-    y: number;
+    x: number | null;
+    y: number | null;
     values?: number[];
     names?: string[];
   }>({
     index: null,
-    x: 0,
-    y: 0,
+    x: null,
+    y: null,
   });
 
   const [hoveredLineIndex, setHoveredLineIndex] = useState<null | number>(null);
 
   const [tooltipRectWidth, setTooltipRectWidth] = useState(0);
   const [tooltipRectHeight, setTooltipRectHight] = useState(0);
-  const [tooltipSpotX, setTooltipSpotX] = useState(0);
-  const [tooltipSpotY, setTooltipSpotY] = useState(0);
 
   const [pathLength, setPathLength] = useState<number[]>([]);
 
@@ -211,6 +217,7 @@ const LineChart: React.FC<LineChartProps> = ({
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
   useEffect(() => {
     let linePathsLength: number[] = [];
     for (let i = 0; i < lineData.length; i++) {
@@ -221,6 +228,16 @@ const LineChart: React.FC<LineChartProps> = ({
     }
     setPathLength(linePathsLength);
   }, [data]);
+
+  // useEffect(() => {
+  //   hoveredInfo.x && hoveredInfo.x + tooltipRectWidth > width
+  //     ? setTooltipSpotX(hoveredInfo.x - tooltipRectWidth - 10)
+  //     : hoveredInfo.x && setTooltipSpotX(hoveredInfo.x + 20);
+
+  //   hoveredInfo.y && hoveredInfo.y + tooltipRectHeight > height + 20
+  //     ? setTooltipSpotY(hoveredInfo.y - tooltipRectHeight + 20)
+  //     : hoveredInfo.y && setTooltipSpotY(hoveredInfo.y);
+  // }, [hoveredInfo, tooltipRectHeight]);
 
   // Example: 특정 path에 ref를 할당
   const addPathRef = (i: number, element: SVGPathElement | null) => {
@@ -255,6 +272,8 @@ const LineChart: React.FC<LineChartProps> = ({
     const closestValues = lineData.map((line) => line[closestIndex]);
     const closestNames = lineName.map((name) => name);
 
+    setPrevHoveredSpot({ x: hoveredInfo.x, y: hoveredInfo.y });
+
     setHoveredInfo({
       index: closestIndex,
       x: point.x,
@@ -264,17 +283,11 @@ const LineChart: React.FC<LineChartProps> = ({
     });
 
     calculateTooltipSize();
-
-    hoveredInfo.x + tooltipRectWidth > width
-      ? setTooltipSpotX(hoveredInfo.x - tooltipRectWidth - 10)
-      : setTooltipSpotX(hoveredInfo.x + 20);
-    hoveredInfo.y + tooltipRectHeight > height + 20
-      ? setTooltipSpotY(hoveredInfo.y - tooltipRectHeight + 20)
-      : setTooltipSpotY(hoveredInfo.y);
   };
 
   const handleMouseLeave = () => {
-    setHoveredInfo((prev) => ({ ...prev, index: null }));
+    setHoveredInfo((prev) => ({ ...prev, index: null, x: null, y: null }));
+    setPrevHoveredSpot(() => ({ x: null, y: null }));
   };
 
   // 툴팁 너비 계산 로직
@@ -687,8 +700,16 @@ const LineChart: React.FC<LineChartProps> = ({
         <g className="tooltip-layer">
           {tooltip && hoveredInfo?.index != null && hoveredInfo.values && (
             <TooltipGroup
+              isInitialSpot={prevHoveredSpot.x == null}
               ref={tooltipRef}
-              transform={`translate(${tooltipSpotX}, ${tooltipSpotY})`}
+              transform={
+                hoveredInfo.x !== null && hoveredInfo.y !== null
+                  ? `translate(
+                      ${hoveredInfo.x + tooltipRectWidth > width ? hoveredInfo.x - tooltipRectWidth - 10 : hoveredInfo.x + 20},
+                      ${hoveredInfo.y + tooltipRectHeight > height + 20 ? hoveredInfo.y - tooltipRectHeight + 20 : hoveredInfo.y}
+                    )`
+                  : undefined // transform 생략
+              }
             >
               <TooltipRect
                 x={-10}
