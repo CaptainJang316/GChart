@@ -73,7 +73,7 @@ function App() {
     chartStyle: {
       // color: "#5470C6",
       lineStyle: "smooth",
-      fillArea: false,
+      fillArea: true,
     },
     tooltip: true,
     label: {

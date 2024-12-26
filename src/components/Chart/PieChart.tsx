@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { PieChartProps } from "../../types/Option";
 import styled, { keyframes } from "styled-components";
 import { darkenColor } from "../../utils/color";
-import { PieChartProps } from "../../types/Option";
 
 // 애니메이션 스타일
 const rotateAnimation = keyframes`
@@ -18,7 +18,6 @@ const StyledPath = styled.path<{ delay: number }>`
   animation: ${rotateAnimation} 1s ease-out;
   animation-delay: ${(props) => props.delay}ms;
 `;
-
 const TooltipGroup = styled.g`
   pointer-events: none;
   transition: transform 0.15s ease-out;
@@ -36,6 +35,13 @@ const TooltipText = styled.text`
   text-anchor: middle;
 `;
 
+interface TooltipInfoProps {
+  x: number | null;
+  y: number | null;
+  value: number;
+  label: string;
+}
+
 const PieChart: React.FC<PieChartProps> = ({
   data,
   title,
@@ -44,9 +50,9 @@ const PieChart: React.FC<PieChartProps> = ({
   tooltip = true,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [tooltipInfo, setTooltipInfo] = useState({
-    x: 0,
-    y: 0,
+  const [tooltipInfo, setTooltipInfo] = useState<TooltipInfoProps>({
+    x: null,
+    y: null,
     value: 0,
     label: "",
   });
@@ -54,9 +60,11 @@ const PieChart: React.FC<PieChartProps> = ({
   // 중심점 계산
   const centerX = width / 2;
   const centerY = height / 2;
+
+  // 반지름 계산산
   const radius = Math.min(width, height) / 2 - padding;
 
-  // 데이터 총합 계산
+  // 데이터 총합 계산산
   const total = data.values.reduce((acc, val) => acc + val, 0);
 
   // 각도 계산 함수
@@ -184,7 +192,7 @@ const PieChart: React.FC<PieChartProps> = ({
               key={i}
               d={segment.path}
               fill={
-                hoveredIndex === i
+                hoveredIndex == i
                   ? darkenColor(segment.color, 0.2)
                   : segment.color
               }
@@ -194,7 +202,7 @@ const PieChart: React.FC<PieChartProps> = ({
                 handleMouseMove(e, segment.value, segment.label)
               }
               onMouseLeave={() => setHoveredIndex(null)}
-            />
+            ></StyledPath>
           ))}
         </g>
 
@@ -211,10 +219,10 @@ const PieChart: React.FC<PieChartProps> = ({
           </TooltipGroup>
         )}
 
-        <g className="legend-layer" transform={`translate(${width + 20}, 60)`}>
+        <g className="legend-layer">
           {segments.map((segment, i) => (
             <g key={i} transform={`translate(0, ${i * 25})`}>
-              <rect width={15} height={15} fill={segment.color} />
+              <rect width={15} height={15} fill={segment.color} rx={3} />
               <text x={25} y={12} fontSize="12">
                 {segment.label} ({(segment.percentage * 100).toFixed(1)}%)
               </text>

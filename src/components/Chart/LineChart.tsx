@@ -436,11 +436,22 @@ const LineChart: React.FC<LineChartProps> = ({
   };
 
   const createSmoothAreaPath = (pathData: string) => {
-    // Area 만들기 위한 작업(path 닫기)
-    // 1. 마지막 지점에서 아래로
-    pathData += ` L ${currX} ${height}`;
-    // 2. 시작점으로 돌아가기
-    pathData += ` L ${firstX} ${height} Z`;
+    // 1. pathData의 시작점 추출
+    const startPoint = pathData.split("M ")[1].split("C")[0];
+    const startX = startPoint.split(" ")[0];
+
+    // 2. pathData의 마지막 좌표 추출
+    const coordinates = pathData.split(" ");
+    const lastX = coordinates[coordinates.length - 2];
+    const lastY = coordinates[coordinates.length - 1];
+
+    // 3. 영역을 만들기 위한 path 닫기
+    // 마지막 지점에서 아래로
+    pathData += ` L ${lastX} ${height}`;
+    // 시작점으로 수평으로 이동
+    pathData += ` L ${startX} ${height}`;
+    // 시작점으로 돌아가기
+    pathData += ` Z`;
 
     return pathData;
   };
