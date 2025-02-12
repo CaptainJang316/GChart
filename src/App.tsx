@@ -155,7 +155,7 @@ function App() {
     },
     chartStyle: {
       innerRadius: 80, // 도넛 차트를 위한 내부 반지름
-      startAngle: 0, // 시작 각도
+      startAngle: -90, // 시작 각도
       padAngle: 5,
     },
     tooltip: true,

@@ -7,15 +7,17 @@ import { darkenColor } from "../../utils/color";
 const rotateAnimation = keyframes`
     from {
         transform: rotate(0deg);
+        transform-origin: center;
     }
     to {
         transform: rotate(360deg);
+        transform-origin: center;
     }
 `;
 
 const StyledPath = styled.path<{ delay: number }>`
   transition: all 0.3s ease;
-  animation: ${rotateAnimation} 1s ease-out;
+  animation: ${rotateAnimation} 0.5s ease-out;
   animation-delay: ${(props) => props.delay}ms;
 `;
 const TooltipGroup = styled.g`
@@ -46,7 +48,7 @@ const PieChart: React.FC<PieChartProps> = ({
   data,
   title,
   layout: { width = 500, height = 300, padding = 40 },
-  chartStyle: { innerRadius = 0, startAngle = 0, padAngle = 0 },
+  chartStyle: { innerRadius = 0, startAngle = 90, padAngle = 0 },
   tooltip = true,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -196,7 +198,7 @@ const PieChart: React.FC<PieChartProps> = ({
                   ? darkenColor(segment.color, 0.2)
                   : segment.color
               }
-              delay={i * 100}
+              delay={i * 70}
               onMouseEnter={() => setHoveredIndex(i)}
               onMouseMove={(e) =>
                 handleMouseMove(e, segment.value, segment.label)
