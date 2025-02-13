@@ -200,7 +200,7 @@ const PieChart: React.FC<PieChartProps> = ({
                   ? darkenColor(segment.color, 0.2)
                   : segment.color
               }
-              delay={i * 70}
+              delay={i * 150}
               onMouseEnter={() => setHoveredIndex(i)}
               onMouseMove={(e) =>
                 handleMouseMove(e, segment.value, segment.label)

@@ -13,9 +13,6 @@ const rotateAnimation = keyframes`
     to {
         transform: rotate(360deg);
         transform-origin: center;
-        stroke-dashoffset: 0;
-    }
-`;
 
 const StyledPath = styled.path<{ delay: number }>`
   transition: all 0.3s ease;

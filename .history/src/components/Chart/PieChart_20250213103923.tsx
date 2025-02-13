@@ -20,7 +20,6 @@ const rotateAnimation = keyframes`
 const StyledPath = styled.path<{ delay: number }>`
   transition: all 0.3s ease;
   animation: ${rotateAnimation} 0.5s ease-out;
-  animation-delay: ${(props) => props.delay}ms;
 `;
 const TooltipGroup = styled.g`
   pointer-events: none;

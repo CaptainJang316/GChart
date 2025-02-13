@@ -13,7 +13,7 @@ const rotateAnimation = keyframes`
     to {
         transform: rotate(360deg);
         transform-origin: center;
-        stroke-dashoffset: 0;
+        // stroke-dashoffset: 0;
     }
 `;
 

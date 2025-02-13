@@ -8,12 +8,10 @@ const rotateAnimation = keyframes`
     from {
         transform: rotate(0deg);
         transform-origin: center;
-        stroke-dashoffset: 100;
     }
     to {
         transform: rotate(360deg);
         transform-origin: center;
-        stroke-dashoffset: 0;
     }
 `;
 
